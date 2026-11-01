@@ -1,0 +1,32 @@
+# Dependencias
+node_modules/
+
+# Artefactos de Next.js y compilación
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.turbo/
+
+# Configuración local y secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Configuración y caché local de herramientas
+.vercel/
+supabase/.temp/
+supabase/.branches/
+
+# Archivos locales o temporales
+uploads/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
