@@ -1,5 +1,5 @@
-import RegistroForm from "@/components/RegistroForm";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <RegistroForm />;
+  redirect("/registro");
 }

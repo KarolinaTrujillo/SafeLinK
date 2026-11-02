@@ -71,49 +71,69 @@ La propuesta define estas capas y tecnologías; no especifica nombres de carpeta
 - Manejar mensajes de rechazo sin revelar innecesariamente existencia o metadatos de archivos privados.
 - Mantener eventos mínimos y sanitizados.
 
-## 8. Estructura de carpetas recomendada
+## 8. Estructura actual y crecimiento acordado
 
-La propuesta académica **no fija** estructura de directorios. Se acordó una raíz común y un único repositorio para separar responsabilidades y poder desplegar frontend y backend independientemente:
+La propuesta académica **no fija** nombres de carpetas. Se acordó mantener un monorepo, con frontend, backend, documentación y migraciones separados. La estructura debe crecer conforme se implementen las vistas; no crear carpetas o archivos vacíos para funcionalidades futuras.
+
+### Estructura que existe ahora
 
 ```text
 SafeLinK/
-├── README.md
 ├── .gitignore
 ├── docs/
 │   ├── BITACORA.md
-│   ├── CONTEXTO_PROYECTO.md
-│   ├── arquitectura.md
-│   ├── modelo-datos.md
-│   ├── matriz-riesgos.md
-│   └── pruebas/
+│   └── CONTEXTO_PROYECTO.md
 ├── frontend/
-│   ├── package.json
+│   ├── app/
+│   │   ├── iniciar-sesion/
+│   │   │   ├── page.tsx
+│   │   │   └── iniciarSesion.module.css
+│   │   ├── registro/
+│   │   │   ├── page.tsx
+│   │   │   └── registro.module.css
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx             # redirige a /registro
+│   ├── components/
+│   │   └── auth/
+│   │       ├── InicioSesionForm.tsx
+│   │       └── RegistroForm.tsx
+│   ├── lib/
+│   │   └── supabase.ts
+│   ├── public/                  # recursos estáticos actuales de Next.js
+│   ├── .gitignore
 │   ├── .env.example
-│   └── src/
-│       ├── app/                 # rutas/páginas Next.js
-│       ├── components/          # componentes reutilizables
-│       ├── features/            # auth, archivos, enlaces, administración
-│       ├── lib/                 # cliente Supabase y utilidades
-│       └── types/
+│   ├── eslint.config.mjs
+│   ├── next.config.ts
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── README.md
+│   └── tsconfig.json
 ├── backend/
-│   ├── package.json
+│   ├── src/
+│   │   ├── config/supabase.ts
+│   │   ├── middleware/auth.ts
+│   │   ├── app.ts
+│   │   └── server.ts
 │   ├── .env.example
-│   └── src/
-│       ├── app.ts               # configuración Express
-│       ├── server.ts            # arranque HTTP
-│       ├── config/              # configuración/env validado
-│       ├── routes/              # rutas REST
-│       ├── controllers/         # HTTP entrada/salida
-│       ├── middleware/          # JWT, validación, límites, errores
-│       ├── services/            # reglas de negocio
-│       ├── repositories/        # acceso a datos
-│       ├── validators/          # esquemas de entrada/archivo
-│       └── types/
+│   ├── package.json
+│   ├── package-lock.json
+│   └── tsconfig.json
 └── supabase/
-    └── migrations/              # SQL versionado: tablas, constraints, RLS, policies
+    └── migrations/
+        └── 202611010001_initial_schema.sql
 ```
 
-Se creó la raíz común `SafeLinK/` con `frontend/`, `backend/`, `docs/` y `supabase/migrations/`, y se inicializó un solo repositorio Git. Los documentos viven en `docs/`. Esta organización es una decisión del equipo, no una exigencia de la propuesta. Las carpetas originales vacías `SafeLinK-Frontend` y `SafeLinK-Backend` se conservaron por ahora; usar la nueva raíz `SafeLinK/` en VS Code. No guardar secretos en `.env.example`; incluir solo nombres de variables y valores ficticios.
+### Cómo se ampliará cuando se implementen las siguientes vistas
+
+- Las páginas y rutas de Next.js se agregan bajo `frontend/app/`, una carpeta por ruta.
+- Los componentes reutilizables se agrupan por área dentro de `frontend/components/` (por ejemplo, `archivos/`, `enlaces/` y `admin/`) cuando ya existan.
+- Las funciones compartidas del navegador permanecen en `frontend/lib/`; tipos compartidos pueden agregarse en `frontend/types/` cuando se necesiten.
+- El backend conserva su estructura simple actual. Al agregar funciones, se incorporan rutas y lógica por módulo dentro de `backend/src/`; no crear capas vacías por anticipado.
+- SQL nuevo o cambios de esquema se guardan como nuevas migraciones en `supabase/migrations/`.
+- Las pantallas previstas son registro, inicio de sesión, recuperación/restablecimiento de contraseña, mis archivos, carga, configuración de enlace, descarga pública y administración. Las variaciones de error o bloqueo serán estados de esas páginas, no rutas independientes salvo que el flujo lo requiera.
+
+La estructura es una decisión del equipo y puede ajustarse con acuerdo, sin cambiar el stack obligatorio. No guardar secretos en `.env.example`; incluir solo nombres de variables y valores ficticios.
 
 ## 9. Pendientes por decidir antes de cerrar el diseño
 

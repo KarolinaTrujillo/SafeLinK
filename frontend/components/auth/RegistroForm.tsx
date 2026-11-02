@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import styles from "@/app/page.module.css";
+import styles from "@/app/registro/registro.module.css";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
