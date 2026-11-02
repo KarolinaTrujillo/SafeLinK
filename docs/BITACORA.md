@@ -35,6 +35,7 @@ En los próximos dos días se busca completar aproximadamente la primera mitad d
 - [x] Preparar estructura mínima del backend Express en TypeScript, configuración segura y endpoint de estado; dependencias instaladas, Node 26.13.0 LTS activo y conexión `/api/health` confirmada.
 - [~] Validar JWT de Supabase Auth antes de permitir rutas privadas; middleware y ruta de comprobación creados, falta probarlos con una sesión autenticada del frontend.
 - [ ] Conectar frontend con Supabase Auth para registro, inicio de sesión y cierre de sesión.
+- [~] Preparar cliente de Supabase en el navegador y variables públicas; falta instalar el SDK y construir las vistas de acceso de acuerdo con Figma.
 - [ ] Configurar verificación de correo y recuperación de contraseña con Supabase; documentar URLs de redirección para desarrollo.
 - [ ] Conectar API Express a Supabase desde el servidor, usando solo claves/secretos almacenados en variables de entorno del backend.
 - [ ] Implementar endpoint protegido de salud/configuración sin exponer secretos.
@@ -74,6 +75,7 @@ En los próximos dos días se busca completar aproximadamente la primera mitad d
 | 2026-11-01 | Preparar y aplicar migración inicial basada en el diagrama presentado, con restricciones acordadas, RLS y bucket privado. | Mantener el diseño aprobado y centralizar autorización en la API Express con un esquema fácil de entender. | Supabase informó ejecución exitosa; Table Editor muestra `perfiles`, `archivos`, `enlaces_compartidos` y `eventos_acceso`; Storage muestra `safelink-files` con límite de 10,000,000 bytes, MIME permitidos y `Public bucket` desactivado. La prueba de acceso de RLS con roles cliente queda pendiente. |
 | 2026-11-01 | Crear y arrancar la base del backend Express con TypeScript, configuración privada de Supabase y ruta `/api/health`. | Iniciar la conexión API sin exponer `service_role` y mantener estructura sencilla. | Karol instaló 94 paquetes y npm reportó 0 vulnerabilidades. El problema de WebSocket con Node 20.19.5 se resolvió al instalar Node 26.13.0 LTS; `/api/health` respondió `{"status":"ok"}`. El `.env` permanece local y la clave no fue compartida. |
 | 2026-11-02 | Agregar middleware de autenticación a Express y ruta protegida `/api/auth/me`. | Asegurar que las futuras operaciones privadas usen identidad validada por Supabase Auth y no un ID enviado por cliente. | Creado `backend/src/middleware/auth.ts`; token ausente o inválido obtiene 401 y fallos al consultar Supabase obtienen 503. La ruta responde solo con el ID verificado. Falta probarla con un token de una sesión real cuando se integre el login del frontend. |
+| 2026-11-02 | Preparar cliente Supabase para el navegador. | Permitir registro e inicio de sesión usando solo la clave pública en Next.js. | Creados `frontend/lib/supabase.ts` y `frontend/.env.example`; se agregó una excepción de `.env.example` en `frontend/.gitignore`. La instalación del SDK falló aquí por `ENOTFOUND registry.npmjs.org`, así que falta que `npm install` genere el lockfile. La vista de Figma no se pudo leer; se requieren capturas de registro e inicio de sesión antes de implementar su apariencia. |
 
 ## Decisiones y cambios
 
