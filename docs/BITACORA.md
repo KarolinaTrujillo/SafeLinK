@@ -25,13 +25,15 @@ En los próximos dos días se busca completar aproximadamente la primera mitad d
 - [ ] Revisar el DBML de referencia contra requisitos y resolver los pendientes que bloqueen las migraciones.
 - [x] Crear y aplicar migración inicial de enums, tablas y relaciones propias; no recrear `auth.users` ni `storage.objects`. Supabase confirmó la ejecución y las cuatro tablas aparecen en Table Editor.
 - [~] Activar RLS y preparar grants/policies mínimos; falta verificar el comportamiento en Supabase.
-- [~] Crear bucket privado para archivos; Storage muestra `safelink-files` con tamaño y tipos permitidos. Falta verificar en la configuración del bucket que sea privado.
+- [x] Crear bucket privado para archivos; Storage muestra `safelink-files`, límite de 10,000,000 bytes, tipos permitidos y `Public bucket` desactivado.
 - [ ] Registrar decisiones y problemas encontrados en esta bitácora.
 
 **Entregable al cierre del día 1:** estructura ejecutable localmente, esquema de datos inicial aplicado a Supabase y reglas de acceso iniciales documentadas.
 
 ### Día 2 — Conexión y flujo seguro inicial
 
+- [x] Preparar estructura mínima del backend Express en TypeScript, configuración segura y endpoint de estado; dependencias instaladas, Node 26.13.0 LTS activo y conexión `/api/health` confirmada.
+- [~] Validar JWT de Supabase Auth antes de permitir rutas privadas; middleware y ruta de comprobación creados, falta probarlos con una sesión autenticada del frontend.
 - [ ] Conectar frontend con Supabase Auth para registro, inicio de sesión y cierre de sesión.
 - [ ] Configurar verificación de correo y recuperación de contraseña con Supabase; documentar URLs de redirección para desarrollo.
 - [ ] Conectar API Express a Supabase desde el servidor, usando solo claves/secretos almacenados en variables de entorno del backend.
@@ -69,7 +71,9 @@ En los próximos dos días se busca completar aproximadamente la primera mitad d
 | 2026-11-01 | Vencimientos: presets 1 h, 12 h, 1 d, 2 d, de 5 d a 10 d; personalizado hasta 15 d. | Confirmación de la estudiante; “5 d hasta 10 d” se interpreta como opciones por cada día. | Usar un único selector y validar toda elección en servidor. |
 | 2026-11-01 | Conservar eventos de acceso por 60 días; usar Supabase Cron diario + Edge Function privada para limpieza de Storage y purga de eventos vencidos. | Confirmación de la estudiante; cumplir borrado y estadísticas temporales. | Antes de implementar, confirmar disponibilidad/costo de Cron en Free y límites de Edge Functions. |
 | 2026-11-01 | Reunir frontend, backend, documentación y migraciones en una raíz SafeLinK con un solo repositorio. | Confirmación de la estudiante. | Raíz `SafeLinK/` y carpetas base creadas; los dos directorios antiguos vacíos se conservaron para evitar romper la ventana de VS Code abierta. |
-| 2026-11-01 | Preparar y aplicar migración inicial basada en el diagrama presentado, con restricciones acordadas, RLS y bucket privado. | Mantener el diseño aprobado y centralizar autorización en la API Express con un esquema fácil de entender. | Supabase informó ejecución exitosa; Table Editor muestra `perfiles`, `archivos`, `enlaces_compartidos` y `eventos_acceso`; Storage muestra `safelink-files` con límite de 10,000,000 bytes y MIME permitidos. Falta verificar el acceso RLS y el ajuste privado del bucket en el panel. |
+| 2026-11-01 | Preparar y aplicar migración inicial basada en el diagrama presentado, con restricciones acordadas, RLS y bucket privado. | Mantener el diseño aprobado y centralizar autorización en la API Express con un esquema fácil de entender. | Supabase informó ejecución exitosa; Table Editor muestra `perfiles`, `archivos`, `enlaces_compartidos` y `eventos_acceso`; Storage muestra `safelink-files` con límite de 10,000,000 bytes, MIME permitidos y `Public bucket` desactivado. La prueba de acceso de RLS con roles cliente queda pendiente. |
+| 2026-11-01 | Crear y arrancar la base del backend Express con TypeScript, configuración privada de Supabase y ruta `/api/health`. | Iniciar la conexión API sin exponer `service_role` y mantener estructura sencilla. | Karol instaló 94 paquetes y npm reportó 0 vulnerabilidades. El problema de WebSocket con Node 20.19.5 se resolvió al instalar Node 26.13.0 LTS; `/api/health` respondió `{"status":"ok"}`. El `.env` permanece local y la clave no fue compartida. |
+| 2026-11-02 | Agregar middleware de autenticación a Express y ruta protegida `/api/auth/me`. | Asegurar que las futuras operaciones privadas usen identidad validada por Supabase Auth y no un ID enviado por cliente. | Creado `backend/src/middleware/auth.ts`; token ausente o inválido obtiene 401 y fallos al consultar Supabase obtienen 503. La ruta responde solo con el ID verificado. Falta probarla con un token de una sesión real cuando se integre el login del frontend. |
 
 ## Decisiones y cambios
 
