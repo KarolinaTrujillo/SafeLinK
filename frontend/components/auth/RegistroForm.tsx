@@ -4,7 +4,9 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import styles from "@/app/registro/registro.module.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { validarSesionEnBackend } from "@/lib/api";
 
 function LockIcon() {
   return (
@@ -35,6 +37,7 @@ function CheckIcon() {
 }
 
 export default function RegistroForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -68,7 +71,7 @@ export default function RegistroForm() {
 
     setLoading(true);
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -81,7 +84,17 @@ export default function RegistroForm() {
         return;
       }
 
-      setMessage("Te enviamos un enlace de activación. Revisa tu correo para confirmar la cuenta.");
+      if (data.session?.access_token) {
+        const sesionValida = await validarSesionEnBackend(data.session.access_token);
+        if (!sesionValida) {
+          setError("La cuenta se creó, pero la API no pudo validar la sesión. Intenta iniciar sesión cuando el backend esté activo.");
+          return;
+        }
+        router.replace("/mis-archivos");
+        return;
+      }
+
+      setMessage("La cuenta se creó. Revisa tu correo para confirmar la dirección antes de iniciar sesión.");
       setPassword("");
       setConfirmPassword("");
     } catch {
@@ -119,7 +132,7 @@ export default function RegistroForm() {
                 required
               />
             </div>
-            <p className={styles.fieldHelp}>Se enviará un enlace de activación único a esta dirección.</p>
+            <p className={styles.fieldHelp}>La confirmación de correo depende de la configuración actual de Supabase.</p>
 
             <div className={styles.passwordGrid}>
               <div>

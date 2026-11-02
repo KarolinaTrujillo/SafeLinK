@@ -22,6 +22,7 @@ La propuesta define estas capas y tecnologías; no especifica nombres de carpeta
 ## 4. Usuarios y casos principales
 
 1. Cualquier persona puede registrarse; el registro es abierto.
+   - **Correo durante desarrollo:** la confirmación queda pendiente y se desactivará temporalmente en Supabase para probar registro e inicio de sesión sin SMTP. Al desactivarla, Supabase marca automáticamente el correo como confirmado, aunque no valida que el usuario lo controle. Reactivarla y probar el envío antes del despliegue. La recuperación de contraseña sigue dependiendo del servicio de correo.
 2. El emisor inicia sesión para subir y administrar sus archivos.
 3. El emisor crea un enlace con vencimiento y máximo de descargas; puede protegerlo con contraseña.
 4. El emisor comparte el enlace y, si configuró contraseña, la envía por otro canal.
@@ -32,6 +33,7 @@ La propuesta define estas capas y tecnologías; no especifica nombres de carpeta
 ## 5. Reglas de negocio acordadas
 
 - Cada usuario puede tener **hasta 10 archivos activos** (propuesta acordada en conversación).
+- Cada usuario tiene una cuota prevista de **100,000,000 bytes (100 MB decimal)** de almacenamiento; se valida al reservar metadatos de carga.
 - El tamaño máximo de un archivo es **10,000,000 bytes (10 MB decimal)**.
 - Tipos permitidos: **PDF, JPG, PNG y DOCX**. Rechazar ejecutables, scripts y archivos comprimidos genéricos. Validar en servidor el contenido real; no confiar solo en extensión o MIME declarado por navegador.
 - Solo el propietario puede administrar sus archivos y enlaces.
@@ -46,7 +48,7 @@ La propuesta define estas capas y tecnologías; no especifica nombres de carpeta
 - Registrar métricas/eventos básicos: descargas exitosas, accesos rechazados, archivos por usuario, total de archivos y acciones administrativas relevantes. Conservar eventos 60 días y eliminarlos después.
 - Tras vencimiento/revocación de todos los enlaces utilizables, bloquear acceso de inmediato. Eliminar físicamente el archivo aproximadamente 10 días después, mediante una tarea diaria Supabase Cron que invoque una Edge Function privada (confirmar disponibilidad/costo en Free). Borrar primero el objeto de Storage y después los metadatos. Un archivo pendiente de limpieza sigue ocupando uno de los 10 espacios hasta confirmar el borrado del objeto.
 - Asignación de rol administrador solo desde un contexto confiable; nunca permitir autoasignación durante el registro.
-- Habilitar recuperación de contraseña y verificación de correo con Supabase Auth dentro de límites gratuitos, comprobando la configuración del proyecto y URLs de retorno.
+- Habilitar recuperación de contraseña y verificación de correo con Supabase Auth dentro de límites gratuitos, comprobando la configuración del proyecto y URLs de retorno. La confirmación de correo se mantiene pendiente; temporalmente desactivada en el entorno de desarrollo y debe reactivarse antes del despliegue.
 
 ## 6. Requerimientos funcionales mínimos
 
@@ -64,8 +66,10 @@ La propuesta define estas capas y tecnologías; no especifica nombres de carpeta
 - Activar RLS en tablas propias. El diseño acordado es que el navegador acceda a los datos mediante la API Express, no directamente por la Data API; por eso anon/authenticated no reciben permisos directos y las tablas quedan sin políticas cliente (denegación por defecto). Express valida JWT, propietario y rol antes de usar la clave privada `service_role`.
 - Mantener desactivada la exposición automática de nuevas tablas. La migración revoca grants de `anon` y `authenticated` y concede operaciones al rol privado `service_role`, usado solo por Express.
 - El bucket de Storage es privado y no permite acceso directo del cliente; Express valida propietario/enlace antes de descargar, cargar o borrar objetos usando `service_role`.
+- Las cargas se envían al backend Express, que comprueba la sesión, tamaño, extensión, MIME y firma básica del contenido. El backend genera la ruta de Storage y registra metadatos con un bloqueo de perfil para aplicar los topes por usuario; nunca aceptar propietario o ruta desde el navegador.
 - Claves públicas de cliente solo son aceptables junto con RLS/grants correctos. `service_role`, contraseña PostgreSQL y secretos solo en backend/entorno privado; nunca en frontend ni repositorio.
 - Validar autenticación y autorización en servidor para cada recurso. No confiar en IDs, propietario, MIME o rutas enviados por cliente.
+- La interfaz puede mostrar opciones de administración solo con el rol devuelto por la API Express; el rol se consulta en `perfiles` después de validar el JWT. Nunca confiar en un rol editable enviado por el navegador.
 - Limitar tamaño y frecuencia de solicitudes para reducir abuso de almacenamiento y fuerza bruta.
 - Usar HTTPS en despliegue.
 - Manejar mensajes de rechazo sin revelar innecesariamente existencia o metadatos de archivos privados.
@@ -91,14 +95,24 @@ SafeLinK/
 │   │   ├── registro/
 │   │   │   ├── page.tsx
 │   │   │   └── registro.module.css
+│   │   ├── mis-archivos/
+│   │   │   ├── page.tsx
+│   │   │   └── misArchivos.module.css
+│   │   ├── subir-archivo/
+│   │   │   ├── page.tsx
+│   │   │   └── subirArchivo.module.css
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx             # redirige a /registro
 │   ├── components/
-│   │   └── auth/
-│   │       ├── InicioSesionForm.tsx
-│   │       └── RegistroForm.tsx
+│   │   ├── auth/
+│   │   │   ├── InicioSesionForm.tsx
+│   │   │   └── RegistroForm.tsx
+│   │   └── archivos/
+│   │       ├── MisArchivosVista.tsx
+│   │       └── SubirArchivoVista.tsx
 │   ├── lib/
+│   │   ├── api.ts
 │   │   └── supabase.ts
 │   ├── public/                  # recursos estáticos actuales de Next.js
 │   ├── .gitignore
@@ -121,13 +135,14 @@ SafeLinK/
 │   └── tsconfig.json
 └── supabase/
     └── migrations/
-        └── 202611010001_initial_schema.sql
+        ├── 202611010001_initial_schema.sql
+        └── 202611020001_upload_quota.sql
 ```
 
 ### Cómo se ampliará cuando se implementen las siguientes vistas
 
 - Las páginas y rutas de Next.js se agregan bajo `frontend/app/`, una carpeta por ruta.
-- Los componentes reutilizables se agrupan por área dentro de `frontend/components/` (por ejemplo, `archivos/`, `enlaces/` y `admin/`) cuando ya existan.
+- Los componentes reutilizables se agrupan por área dentro de `frontend/components/`; actualmente `auth/` y `archivos/` ya contienen componentes.
 - Las funciones compartidas del navegador permanecen en `frontend/lib/`; tipos compartidos pueden agregarse en `frontend/types/` cuando se necesiten.
 - El backend conserva su estructura simple actual. Al agregar funciones, se incorporan rutas y lógica por módulo dentro de `backend/src/`; no crear capas vacías por anticipado.
 - SQL nuevo o cambios de esquema se guardan como nuevas migraciones en `supabase/migrations/`.
@@ -147,6 +162,7 @@ La estructura es una decisión del equipo y puede ajustarse con acuerdo, sin cam
 - [x] Retención de `eventos_acceso`: 60 días; métricas visibles administrativas básicas.
 - [x] Usar raíz común y un solo repositorio (monorepo); creados `frontend/`, `backend/`, `docs/` y `supabase/migrations/`.
 - [ ] Confirmar límites gratuitos vigentes de Supabase/Vercel/Render antes del despliegue.
+- [ ] Configurar un método de envío de correo, comprobar verificación y recuperación, y reactivar la confirmación antes del despliegue.
 
 ## 10. Fuera de alcance por ahora
 

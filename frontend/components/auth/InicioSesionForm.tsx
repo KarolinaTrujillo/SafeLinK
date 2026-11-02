@@ -3,25 +3,26 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { validarSesionEnBackend } from "@/lib/api";
 import styles from "@/app/iniciar-sesion/iniciarSesion.module.css";
 
 export default function InicioSesionForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setMessage("");
     setLoading(true);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
@@ -35,8 +36,23 @@ export default function InicioSesionForm() {
         return;
       }
 
-      setMessage("Sesión iniciada correctamente.");
-      setPassword("");
+      const accessToken = data.session?.access_token;
+
+      if (!accessToken) {
+        setError("Supabase no entregó una sesión. Inténtalo de nuevo.");
+        return;
+      }
+
+      const backendValidatesSession = await validarSesionEnBackend(accessToken);
+
+      if (!backendValidatesSession) {
+        setError(
+          "Supabase inició sesión, pero no pudimos validar la sesión con la API. Revisa que el backend esté activo.",
+        );
+        return;
+      }
+
+      router.replace("/mis-archivos");
     } catch {
       setError("Ocurrió un problema al iniciar sesión. Inténtalo de nuevo.");
     } finally {
@@ -94,8 +110,6 @@ export default function InicioSesionForm() {
             </div>
 
             {error && <p className={styles.error} role="alert">{error}</p>}
-            {message && <p className={styles.success} role="status">{message}</p>}
-
             <button className={styles.submit} type="submit" disabled={loading}>
               {loading ? "Iniciando sesión…" : "Iniciar sesión"}
             </button>
