@@ -23,9 +23,9 @@ En los próximos dos días se busca completar aproximadamente la primera mitad d
 - [ ] Crear archivos de configuración y `.gitignore`; definir variables de entorno de ejemplo sin secretos reales.
 - [ ] Crear proyecto Supabase gratuito en la región elegida y guardar credenciales de forma local segura.
 - [ ] Revisar el DBML de referencia contra requisitos y resolver los pendientes que bloqueen las migraciones.
-- [ ] Crear migración inicial de enums, tablas y relaciones propias; no recrear `auth.users` ni `storage.objects`.
-- [ ] Activar RLS y preparar grants/policies mínimos; verificar que datos privados no sean accesibles sin autorización.
-- [ ] Crear bucket privado para archivos y políticas de Storage acordes al propietario.
+- [x] Crear y aplicar migración inicial de enums, tablas y relaciones propias; no recrear `auth.users` ni `storage.objects`. Supabase confirmó la ejecución y las cuatro tablas aparecen en Table Editor.
+- [~] Activar RLS y preparar grants/policies mínimos; falta verificar el comportamiento en Supabase.
+- [~] Crear bucket privado para archivos; Storage muestra `safelink-files` con tamaño y tipos permitidos. Falta verificar en la configuración del bucket que sea privado.
 - [ ] Registrar decisiones y problemas encontrados en esta bitácora.
 
 **Entregable al cierre del día 1:** estructura ejecutable localmente, esquema de datos inicial aplicado a Supabase y reglas de acceso iniciales documentadas.
@@ -69,6 +69,7 @@ En los próximos dos días se busca completar aproximadamente la primera mitad d
 | 2026-11-01 | Vencimientos: presets 1 h, 12 h, 1 d, 2 d, de 5 d a 10 d; personalizado hasta 15 d. | Confirmación de la estudiante; “5 d hasta 10 d” se interpreta como opciones por cada día. | Usar un único selector y validar toda elección en servidor. |
 | 2026-11-01 | Conservar eventos de acceso por 60 días; usar Supabase Cron diario + Edge Function privada para limpieza de Storage y purga de eventos vencidos. | Confirmación de la estudiante; cumplir borrado y estadísticas temporales. | Antes de implementar, confirmar disponibilidad/costo de Cron en Free y límites de Edge Functions. |
 | 2026-11-01 | Reunir frontend, backend, documentación y migraciones en una raíz SafeLinK con un solo repositorio. | Confirmación de la estudiante. | Raíz `SafeLinK/` y carpetas base creadas; los dos directorios antiguos vacíos se conservaron para evitar romper la ventana de VS Code abierta. |
+| 2026-11-01 | Preparar y aplicar migración inicial basada en el diagrama presentado, con restricciones acordadas, RLS y bucket privado. | Mantener el diseño aprobado y centralizar autorización en la API Express con un esquema fácil de entender. | Supabase informó ejecución exitosa; Table Editor muestra `perfiles`, `archivos`, `enlaces_compartidos` y `eventos_acceso`; Storage muestra `safelink-files` con límite de 10,000,000 bytes y MIME permitidos. Falta verificar el acceso RLS y el ajuste privado del bucket en el panel. |
 
 ## Decisiones y cambios
 

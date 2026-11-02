@@ -61,9 +61,9 @@ La propuesta define estas capas y tecnologías; no especifica nombres de carpeta
 
 ## 7. Requerimientos de seguridad
 
-- Activar RLS en las tablas expuestas y diseñar políticas explícitas por operación/rol; no asumir que habilitar RLS por sí solo crea autorización.
-- Configurar grants de Data API junto con RLS. Mantener la exposición automática de nuevas tablas desactivada y conceder acceso solo cuando la política esté lista.
-- Políticas de Storage deben asegurar aislamiento por propietario y bucket privado.
+- Activar RLS en tablas propias. El diseño acordado es que el navegador acceda a los datos mediante la API Express, no directamente por la Data API; por eso anon/authenticated no reciben permisos directos y las tablas quedan sin políticas cliente (denegación por defecto). Express valida JWT, propietario y rol antes de usar la clave privada `service_role`.
+- Mantener desactivada la exposición automática de nuevas tablas. La migración revoca grants de `anon` y `authenticated` y concede operaciones al rol privado `service_role`, usado solo por Express.
+- El bucket de Storage es privado y no permite acceso directo del cliente; Express valida propietario/enlace antes de descargar, cargar o borrar objetos usando `service_role`.
 - Claves públicas de cliente solo son aceptables junto con RLS/grants correctos. `service_role`, contraseña PostgreSQL y secretos solo en backend/entorno privado; nunca en frontend ni repositorio.
 - Validar autenticación y autorización en servidor para cada recurso. No confiar en IDs, propietario, MIME o rutas enviados por cliente.
 - Limitar tamaño y frecuencia de solicitudes para reducir abuso de almacenamiento y fuerza bruta.
