@@ -12,7 +12,7 @@ const plazos = [{ valor: "1", texto: "1 hora" }, { valor: "12", texto: "12 horas
 
 function fechaLocal(fecha: string) {
   const valor = new Date(fecha);
-  return new Date(valor.getTime() - valor.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  return new Date(valor.getTime() - valor.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
 }
 
 async function tokenActual() {
@@ -41,6 +41,7 @@ export default function ConfigurarEnlaceVista() {
   const [mostrarClave, setMostrarClave] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [cargandoEnlaces, setCargandoEnlaces] = useState(false);
+  const [consultaCompleta, setConsultaCompleta] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [confirmarRevocacion, setConfirmarRevocacion] = useState(false);
   const [error, setError] = useState("");
@@ -50,7 +51,7 @@ export default function ConfigurarEnlaceVista() {
   const revocado = Boolean(enlace?.revocado_en);
   const maximo = Number(limite === "personalizado" ? limitePersonalizado : limite);
   const usadas = enlace?.descargas_realizadas ?? 0;
-  const bloqueado = ocupado || cargandoEnlaces || !archivo || revocado;
+  const bloqueado = ocupado || cargandoEnlaces || !consultaCompleta || !archivo || revocado;
 
   useEffect(() => {
     let activo = true;
@@ -64,6 +65,7 @@ export default function ConfigurarEnlaceVista() {
         setEmail(data.session.user.email ?? "");
         if (perfil) setRol(perfil.rol);
         setArchivos(lista);
+        setConsultaCompleta(false);
         setEnlaceId(""); setEnlaces([]);
         setCredenciales({ url: "", contrasena: "" });
         setBorradorClave(""); setMostrarClave(false);
@@ -89,9 +91,15 @@ export default function ConfigurarEnlaceVista() {
     let activo = true;
     async function cargar() {
       setCargandoEnlaces(true);
+      setConsultaCompleta(false);
       try {
         const respuesta = await consultarEnlaces(await tokenActual(), archivoId);
-        if (activo) setEnlaces(respuesta.enlaces);
+        if (activo) {
+          setEnlaces(respuesta.enlaces);
+          const ultimo = [...respuesta.enlaces].sort((a, b) => Date.parse(b.actualizado_en) - Date.parse(a.actualizado_en))[0];
+          aplicarEnlace(ultimo);
+          setConsultaCompleta(true);
+        }
       } catch {
         if (activo) setError("No se pudieron consultar los enlaces. Recarga la página.");
       } finally { if (activo) setCargandoEnlaces(false); }
@@ -100,9 +108,8 @@ export default function ConfigurarEnlaceVista() {
     return () => { activo = false; };
   }, [archivoId]);
 
-  function elegirEnlace(id: string) {
-    const existente = enlaces.find((item) => item.id === id);
-    setEnlaceId(id);
+  function aplicarEnlace(existente?: EnlaceCompartido) {
+    setEnlaceId(existente?.id ?? "");
     setCredenciales({ url: "", contrasena: "" });
     setBorradorClave(""); setMostrarClave(false);
     setConfirmarRevocacion(false); setError(""); setMensaje("");
@@ -115,7 +122,7 @@ export default function ConfigurarEnlaceVista() {
   }
 
   function elegirArchivo(id: string) {
-    elegirEnlace(""); setEnlaces([]); setArchivoId(id);
+    router.push(`/compartir-enlace?archivo=${encodeURIComponent(id)}`);
   }
 
   async function generarClave() {
@@ -187,16 +194,16 @@ export default function ConfigurarEnlaceVista() {
       </div>
       {error && <p className={styles.error} role="alert">{error}</p>}
       {mensaje && <p className={styles.message} role="status">{mensaje}</p>}
+      {archivo &&
       <div className={styles.columns}>
         <form className={styles.panel} onSubmit={guardar}>
           <header className={styles.panelHeading}><span aria-hidden="true">☷</span><div><h2>Políticas de acceso temporal</h2><p>Ajusta la vigencia y restricciones de descarga</p></div></header>
-          {enlaces.length > 0 && <div className={styles.field}><label htmlFor="enlace-existente">Enlace a configurar</label><select id="enlace-existente" value={enlaceId} disabled={ocupado || cargandoEnlaces} onChange={(event) => elegirEnlace(event.target.value)}><option value="">Crear un nuevo enlace</option>{enlaces.map((item, index) => <option key={item.id} value={item.id}>Enlace {enlaces.length - index} · {new Date(item.creado_en).toLocaleString("es-MX")} {item.revocado_en ? "· Revocado" : ""}</option>)}</select></div>}
           <fieldset disabled={bloqueado} className={styles.policies}>
             <legend className={styles.srOnly}>Configuración del enlace</legend>
             <div className={styles.field}>
               <div className={styles.fieldHeading}><label htmlFor="plazo">Vencimiento del enlace</label><small>Hasta 15 días desde su creación</small></div>
               <select id="plazo" value={plazo} onChange={(event) => setPlazo(event.target.value)}>{plazos.map((item) => <option key={item.valor} value={item.valor}>{item.texto}</option>)}</select>
-              {plazo === "personalizado" && <input aria-label="Fecha y hora de vencimiento" type="datetime-local" required value={fecha} onChange={(event) => setFecha(event.target.value)} />}
+              {plazo === "personalizado" && <input aria-label="Fecha y hora de vencimiento" type="datetime-local" step="1" required value={fecha} onChange={(event) => setFecha(event.target.value)} />}
             </div>
             <fieldset className={styles.downloads}>
               <legend>Límite de descargas permitidas</legend>
@@ -208,7 +215,7 @@ export default function ConfigurarEnlaceVista() {
               {protegido && <div className={styles.generate}><small>Clave aleatoria de 12 caracteres con letras, números y símbolos.</small><button type="button" onClick={generarClave}>Generar contraseña aleatoria segura</button></div>}
             </div>
           </fieldset>
-          {revocado && <p className={styles.error}>Este enlace está revocado. Puedes crear uno nuevo.</p>}
+          {revocado && <div className={styles.error}><p>Este enlace está revocado y no puede reactivarse.</p><button type="button" disabled={ocupado} onClick={() => aplicarEnlace()}>Crear un enlace nuevo</button></div>}
           <div className={styles.actions}><button type="button" className={styles.revoke} disabled={!enlace || revocado || ocupado} onClick={() => setConfirmarRevocacion(true)}>Revocar enlace ahora</button><button className={styles.save} type="submit" disabled={bloqueado}>{ocupado ? "Procesando…" : "Guardar configuración"}</button></div>
           {confirmarRevocacion && <div className={styles.confirm}><p>¿Revocar este enlace? No podrá reactivarse.</p><button type="button" disabled={ocupado} onClick={revocar}>Confirmar revocación</button><button type="button" disabled={ocupado} onClick={() => setConfirmarRevocacion(false)}>Cancelar</button></div>}
         </form>
@@ -219,7 +226,7 @@ export default function ConfigurarEnlaceVista() {
           <div className={styles.usage}><div><strong>Estado de descargas</strong><p>{usadas} de {enlace?.maximo_descargas ?? maximo} descargas utilizadas</p></div><span>{enlace ? Math.round(usadas / enlace.maximo_descargas * 100) : 0}%</span></div>
           <p className={styles.hint}>La descarga pública está pendiente de implementación. Por ahora puedes guardar y administrar la configuración del enlace.</p>
         </aside>
-      </div>
+      </div>}
     </section>
   </main>;
 }

@@ -193,3 +193,7 @@ Permite seleccionar un archivo propio, crear enlaces, consultar sus configuracio
 El token se guarda como SHA-256 y la contraseña como scrypt con sal aleatoria. La URL completa se entrega al crear; la contraseña solo al crear o reemplazarla. Permanecen temporalmente en memoria de esta vista y deben copiarse antes de salir. Al consultar enlaces existentes no se recuperan secretos ni hashes. No se requiere una nueva migración: se usa `enlaces_compartidos` del esquema inicial.
 
 **Pendiente:** ruta pública `/descargar/[token]`, validación de contraseña del destinatario, bloqueo por intentos, control atómico de descargas y auditoría. Las URL generadas todavía no permiten descargar. También queda la prueba visual y de integración con una sesión real en Supabase.
+
+### 2026-11-04 — Una configuración por enlace
+
+La pantalla Compartir enlace muestra directamente la configuración guardada más recientemente para el archivo. Si no existe ninguna, permite crearla; si la última fue revocada, permite crear un enlace nuevo de manera explícita. Al subir un archivo se abre la configuración. Los enlaces existentes se conservan. La URL secreta y la contraseña originales solo se muestran al generarlas; la descarga pública sigue pendiente.

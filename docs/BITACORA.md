@@ -111,3 +111,15 @@ Anota aquí cada decisión que cambie alcance o requisitos. Indicar fecha, motiv
 - Secretos aleatorios, token almacenado mediante SHA-256 y contraseña mediante scrypt con sal; los secretos originales no se recuperan al consultar.
 - Sin nueva migración ni cambios remotos de Supabase. Descarga pública y auditoría pendientes; la vista lo indica.
 - TypeScript de frontend y backend y ESLint de archivos afectados pasaron. Pruebas directas de handlers con Supabase simulado pasaron para límites, propiedad, hashes ocultos, edición y revocación. La prueba HTTP local quedó bloqueada por EACCES; integración y revisión visual con sesión real pendientes.
+
+### 2026-11-04 — Separar configuración por enlace
+
+- Se reemplazó el selector dentro del formulario por una lista de enlaces y una dirección de configuración para cada uno; la creación tiene una acción separada.
+- La configuración comprueba que el enlace corresponda al archivo consultado. La lógica de autorización permanece en el backend.
+- Pendiente comprobar el flujo visual con la sesión real de la usuaria.
+
+
+### 2026-11-04 — Mostrar solo la última configuración
+
+- Por corrección de la usuaria, se retiró la lista de enlaces de la pantalla. Al abrir un archivo se carga la configuración con actualización más reciente; guardar edita ese enlace.
+- Si la última configuración está revocada, se ofrece crear un enlace nuevo explícitamente. Los registros anteriores no se borran ni se revocan automáticamente.
