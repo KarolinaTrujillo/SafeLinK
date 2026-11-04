@@ -91,3 +91,23 @@ Anota aquí cada decisión que cambie alcance o requisitos. Indicar fecha, motiv
 |---|---|---|---|
 | 2026-11-01 | Se propone avanzar primero con estructura, Supabase, datos, Auth y carga segura. | Priorizar el núcleo del MVP y la meta de dos días. | Enlaces, auditoría, limpieza y métricas quedan para la fase posterior. |
 
+
+
+### 2026-11-03 — Topbar compartida y diseño de carga
+
+- Se extrajo `Topbar.tsx` y `Topbar.module.css` y se sustituyeron las barras duplicadas de Mis archivos y Subir archivo.
+- Se adaptó Subir Documento a la captura del frame 1-600: distribución de dos columnas, zona de selección, restricciones, archivo preparado, capacidad y resultado de validación.
+- La capacidad usa datos reales; se agregó arrastrar/soltar y Remover. No se muestran archivos ni rechazos de ejemplo.
+- Configurar enlace permanece pendiente; después de cargar se vuelve a Mis archivos.
+- Revisión visual en navegador con sesión real: pendiente.
+- TypeScript (`tsc --noEmit --incremental false`), ESLint de los tres componentes afectados y `git diff --check`: completados sin errores.
+
+
+### 2026-11-03 — Configurar y compartir enlace
+
+- Implementada la vista según la captura del frame 1-1204, reutilizando Topbar y separando estilos, componente y acceso a API.
+- Carga y Mis archivos enlazan a la configuración del archivo seleccionado. El formulario usa archivos reales del usuario.
+- Agregado el módulo backend de enlaces: consulta, creación, edición y revocación, con validación de propiedad, fechas y límites. No se reinician contadores al editar.
+- Secretos aleatorios, token almacenado mediante SHA-256 y contraseña mediante scrypt con sal; los secretos originales no se recuperan al consultar.
+- Sin nueva migración ni cambios remotos de Supabase. Descarga pública y auditoría pendientes; la vista lo indica.
+- TypeScript de frontend y backend y ESLint de archivos afectados pasaron. Pruebas directas de handlers con Supabase simulado pasaron para límites, propiedad, hashes ocultos, edición y revocación. La prueba HTTP local quedó bloqueada por EACCES; integración y revisión visual con sesión real pendientes.

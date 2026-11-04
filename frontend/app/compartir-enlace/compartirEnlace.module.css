@@ -1,0 +1,64 @@
+.page, .loading { min-height: 100vh; background: #f7f8ff; color: #0b2035; }
+.loading { display: grid; place-items: center; }
+.content { width: min(100% - 56px, 1216px); margin: auto; padding: 36px 0 70px; }
+.back { color: #0060c9; font-size: 13px; text-decoration: none; }
+.content h1 { margin: 8px 0 24px; font-size: 32px; font-weight: 600; letter-spacing: -1px; }
+.fileCard { display: flex; align-items: center; gap: 16px; background: white; border-radius: 8px; padding: 18px; margin-bottom: 40px; }
+.fileIcon { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 8px; color: #c41f26; background: #ffe6e7; font-size: 30px; }
+.fileDetails { flex: 1; min-width: 0; }
+.fileDetails label { font-size: 11px; color: #667080; display: block; }
+.fileDetails small { display: block; margin-top: 5px; color: #59616c; overflow-wrap: anywhere; }
+.fileDetails select { width: 100%; max-width: 640px; font-weight: 600; background: white; border: 0; padding: 6px 0; color: #0b2035; font-size: 17px; }
+.columns { display: grid; grid-template-columns: minmax(0, 1.43fr) minmax(0, 1fr); align-items: start; gap: 40px; }
+.panel { border-radius: 9px; background: white; padding: 40px; min-width: 0; }
+.panelHeading { display: flex; align-items: center; gap: 12px; margin-bottom: 38px; }
+.panelHeading > span { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 4px; background: #e1ebff; color: #005dc8; font-size: 23px; }
+.panelHeading h2 { margin: 0; font-size: 19px; font-weight: 600; }
+.panelHeading p { margin: 4px 0 0; color: #656a73; font-size: 12px; }
+.policies { border: 0; padding: 0; margin: 0; min-width: 0; }
+.field { margin: 0 0 32px; }
+.field > label, .fieldHeading label, .downloads legend { font-size: 14px; font-weight: 500; }
+.fieldHeading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.fieldHeading small { color: #005dc8; font-size: 11px; text-align: right; }
+.field select, .field input, .downloads input { width: 100%; box-sizing: border-box; min-height: 38px; padding: 8px 12px; border: 1px solid #dce5f7; border-radius: 5px; background: #edf3ff; color: #0b2035; font: inherit; font-size: 13px; margin-top: 8px; }
+.downloads { border: 0; padding: 0; margin: 0 0 36px; min-width: 0; }
+.downloads legend { padding: 0; margin-bottom: 12px; }
+.options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.options button { border: 0; border-radius: 4px; background: #e4edff; color: #0b2035; padding: 12px 4px; font-size: 11px; cursor: pointer; }
+.options .selected { color: white; background: #0b2035; }
+.protection { background: #eef3ff; padding: 18px; border-radius: 8px; }
+.toggle { display: flex; justify-content: space-between; gap: 12px; cursor: pointer; }
+.toggle strong { font-weight: 500; font-size: 14px; }
+.toggle small { display: block; margin-top: 6px; color: #656a73; font-size: 12px; line-height: 1.5; }
+.toggle input { appearance: none; width: 44px; height: 24px; flex-shrink: 0; background: #aab6c5; border-radius: 20px; position: relative; cursor: pointer; }
+.toggle input:checked { background: #005dc8; }
+.toggle input:before { content: ""; position: absolute; width: 18px; height: 18px; top: 3px; left: 3px; background: white; border-radius: 50%; }
+.toggle input:checked:before { left: 23px; }
+.generate { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 24px; }
+.generate small { font-size: 12px; color: #515866; flex: 1; }
+.generate button { background: white; border: 0; border-radius: 4px; padding: 10px; flex: 1; color: #0b2035; font-size: 12px; cursor: pointer; }
+.actions { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; }
+.actions button { border: 0; border-radius: 5px; padding: 11px 16px; font-size: 13px; cursor: pointer; }
+.revoke { color: #c61926; background: #f0f4ff; }
+.save { background: #0b2035; color: white; min-width: 180px; }
+.panel button:disabled, .policies:disabled { opacity: .6; cursor: not-allowed; }
+.credential { margin-bottom: 36px; }
+.credential > label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.secretRow { display: flex; align-items: stretch; min-height: 42px; border-radius: 4px; background: #eef3ff; padding: 4px; gap: 4px; }
+.secretRow input { width: 100%; min-width: 0; background: transparent; border: 0; padding: 6px 10px; font-family: monospace; font-size: 12px; color: #0b2035; }
+.secretRow button { padding: 4px 7px; border: 0; background: white; color: #23394e; font-size: 12px; cursor: pointer; border-radius: 3px; }
+.copy { width: 100%; border: 0; border-radius: 4px; background: #005dc8; color: white; padding: 10px; font-size: 14px; margin-top: 10px; cursor: pointer; }
+.usage { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px; border-radius: 8px; background: #eef3ff; }
+.usage strong { font-size: 13px; font-weight: 500; }
+.usage p { margin: 4px 0 0; font-size: 12px; color: #656a73; }
+.usage > span { display: grid; place-items: center; width: 42px; height: 42px; border: 4px solid #d5e4ff; border-top-color: #005dc8; border-radius: 50%; font-size: 12px; }
+.hint { font-size: 12px; line-height: 1.6; color: #656a73; }
+.error, .message { padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.5; }
+.error { background: #fff0f1; color: #b42029; }
+.message { background: #eaf6ef; color: #246440; }
+.confirm { padding: 12px; background: #fff0f1; border-radius: 6px; margin-top: 12px; font-size: 13px; }
+.confirm button { margin: 0 8px 8px 0; padding: 8px; border: 1px solid #d9a4a8; background: white; border-radius: 4px; cursor: pointer; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.content button:focus-visible, .content input:focus-visible, .content select:focus-visible, .content a:focus-visible { outline: 2px solid #005dc8; outline-offset: 3px; }
+@media (max-width: 1100px) { .columns { gap: 24px; } .panel { padding: 24px; } .actions { flex-wrap: wrap; } .options { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .content { width: calc(100% - 32px); padding-top: 24px; } .content h1 { font-size: 27px; } .columns { grid-template-columns: 1fr; } .fileCard { margin-bottom: 24px; } .fieldHeading { flex-direction: column; gap: 4px; } .generate { flex-direction: column; align-items: stretch; gap: 12px; } .actions button { flex: 1; } }

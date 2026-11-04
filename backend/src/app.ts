@@ -6,6 +6,8 @@ import path from "node:path";
 import { supabaseAdmin } from "./config/supabase.js";
 import { requireAuth } from "./middleware/auth.js";
 
+import { enlacesRouter } from "./routes/enlaces.js";
+
 export const app = express();
 
 const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
@@ -21,6 +23,7 @@ const tiposPermitidos: Record<string, string> = {
 app.use(helmet());
 app.use(cors({ origin: frontendUrl }));
 app.use(express.json({ limit: "1mb" }));
+app.use("/api/enlaces", enlacesRouter);
 
 app.get("/api/health", async (_request, response) => {
   const { error } = await supabaseAdmin

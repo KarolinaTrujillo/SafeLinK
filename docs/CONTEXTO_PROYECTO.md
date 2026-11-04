@@ -175,3 +175,21 @@ La estructura es una decisión del equipo y puede ajustarse con acuerdo, sin cam
 ## 11. Cómo mantener este documento
 
 Actualizar este archivo cuando la estudiante confirme una decisión o cambie un requisito. Distinguir siempre entre: **acordado**, **propuesta por confirmar** y **sugerencia técnica**. Registrar fecha y motivo del cambio en `BITACORA.md`.
+
+
+### Navegación compartida (2026-11-03)
+
+Las vistas Mis archivos y Subir archivo utilizan `frontend/components/layout/Topbar.tsx` y `Topbar.module.css`. Las siguientes vistas privadas deben reutilizarlos sin duplicar estilos de navegación. Cada vista entrega el correo de la sesión y el rol consultado en el backend; la topbar marca la ruta activa y ofrece cierre de sesión. Administración se muestra únicamente para el rol administrador; la autorización real de operaciones sigue correspondiendo al backend.
+
+La pantalla de carga usa capacidad real, selección por clic o arrastre, eliminación de la selección y el último resultado de validación de esta pantalla. La comprobación inicial de extensión y tamaño no equivale a validar el contenido en el servidor. Después de cargar, el botón abre Compartir enlace con el archivo recién subido seleccionado.
+
+
+### Configuración de enlaces (2026-11-03)
+
+Implementada la ruta `frontend/app/compartir-enlace/page.tsx`, con estilos en `compartirEnlace.module.css`, componente `frontend/components/archivos/ConfigurarEnlaceVista.tsx` y funciones de API en `frontend/lib/api.ts`. Reutiliza la Topbar. Las rutas del módulo están en `backend/src/routes/enlaces.ts`, montadas desde `app.ts`.
+
+Permite seleccionar un archivo propio, crear enlaces, consultar sus configuraciones, editar vencimiento y límite, generar contraseña opcional y revocar con confirmación. Usa los presets acordados: máximo 15 días desde creación y entre 1 y 20 descargas. Editar no reinicia las descargas realizadas. El backend valida sesión y propiedad del archivo; las ediciones comprueban la versión para evitar sobrescribir cambios anteriores.
+
+El token se guarda como SHA-256 y la contraseña como scrypt con sal aleatoria. La URL completa se entrega al crear; la contraseña solo al crear o reemplazarla. Permanecen temporalmente en memoria de esta vista y deben copiarse antes de salir. Al consultar enlaces existentes no se recuperan secretos ni hashes. No se requiere una nueva migración: se usa `enlaces_compartidos` del esquema inicial.
+
+**Pendiente:** ruta pública `/descargar/[token]`, validación de contraseña del destinatario, bloqueo por intentos, control atómico de descargas y auditoría. Las URL generadas todavía no permiten descargar. También queda la prueba visual y de integración con una sesión real en Supabase.

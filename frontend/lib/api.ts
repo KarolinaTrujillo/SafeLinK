@@ -72,7 +72,7 @@ export async function obtenerArchivos(accessToken: string): Promise<ArchivoUsuar
   return resultado.archivos ?? [];
 }
 
-export async function subirArchivo(accessToken: string, archivo: File): Promise<void> {
+export async function subirArchivo(accessToken: string, archivo: File): Promise<{ id: string; nombre: string }> {
   const response = await fetch(`${apiUrl}/api/archivos`, {
     method: "POST",
     headers: {
@@ -87,4 +87,53 @@ export async function subirArchivo(accessToken: string, archivo: File): Promise<
   if (!response.ok) {
     throw new Error(await mensajeError(response, "No se pudo subir el archivo"));
   }
+  return response.json();
+}
+
+
+export type EnlaceCompartido = {
+  id: string;
+  archivo_id: string;
+  vence_en: string;
+  maximo_descargas: number;
+  descargas_realizadas: number;
+  revocado_en: string | null;
+  creado_en: string;
+  actualizado_en: string;
+  protegido: boolean;
+};
+
+export type ConfiguracionEnlace = {
+  archivoId: string;
+  venceEn: string;
+  maximoDescargas: number;
+  protegido: boolean;
+  contrasena?: string;
+  actualizadoEn?: string;
+};
+
+export type ResultadoEnlace = { enlace: EnlaceCompartido; url?: string; contrasena?: string | null };
+
+async function peticionEnlaces<T>(token: string, ruta: string, method = "GET", body?: unknown): Promise<T> {
+  const response = await fetch(`${apiUrl}/api/enlaces${ruta}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    cache: "no-store",
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(await mensajeError(response, "No se pudo procesar el enlace."));
+  return response.json();
+}
+
+export function consultarEnlaces(token: string, archivoId: string) {
+  return peticionEnlaces<{ enlaces: EnlaceCompartido[] }>(token, `/archivo/${encodeURIComponent(archivoId)}`);
+}
+export function generarClaveEnlace(token: string) {
+  return peticionEnlaces<{ contrasena: string }>(token, "/contrasena", "POST");
+}
+export function guardarEnlace(token: string, configuracion: ConfiguracionEnlace, id?: string) {
+  return peticionEnlaces<ResultadoEnlace>(token, id ? `/${encodeURIComponent(id)}` : "", id ? "PATCH" : "POST", configuracion);
+}
+export function revocarEnlace(token: string, id: string) {
+  return peticionEnlaces<ResultadoEnlace>(token, `/${encodeURIComponent(id)}/revocar`, "POST");
 }

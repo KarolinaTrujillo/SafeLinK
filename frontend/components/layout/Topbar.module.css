@@ -1,0 +1,135 @@
+.topBar {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  padding: 0 max(24px, calc((100% - 1216px) / 2));
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 4px 16px rgb(15 41 66 / 8%);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  color: #001428;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brandIcon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: #001428;
+  color: #fff;
+  font-size: 14px;
+}
+
+.navigation {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+}
+
+.activeNav,
+.disabledNav,
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #26364a;
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.activeNav {
+  height: 100%;
+  border-bottom: 2px solid #1769e8;
+  color: #001a42;
+}
+
+.disabledNav {
+  color: #43474d;
+  cursor: not-allowed;
+}
+
+.navLink {
+  color: #26364a;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  color: #1769e8;
+}
+
+.adminBadge {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: #d8e2ff;
+  color: #174c9b;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-left: auto;
+}
+
+.email {
+  max-width: 190px;
+  overflow: hidden;
+  color: #5c6776;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signOutButton {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d8deea;
+  border-radius: 5px;
+  background: #fff;
+  color: #001428;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.signOutButton:hover:not(:disabled) {
+  background: #f2f5fb;
+}
+
+.signOutButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+
+.navLink[aria-current="page"] { height: 100%; border-bottom: 2px solid #1769e8; color: #001a42; }
+.signOutButton:focus-visible, .navLink:focus-visible { outline: 2px solid #1769e8; outline-offset: 3px; }
+.logoutError { color: #b42318; font-size: 11px; }
+@media (max-width: 900px) {
+  .topBar { gap: 24px; }
+  .navigation { gap: 18px; }
+  .email { display: none; }
+}
+@media (max-width: 640px) {
+  .topBar { height: auto; min-height: 64px; flex-wrap: wrap; gap: 0 14px; padding: 10px 16px 0; }
+  .navigation { order: 3; width: 100%; height: 42px; gap: 19px; overflow-x: auto; }
+  .disabledNav, .navLink { font-size: 10px; }
+  .account { margin-left: auto; }
+}

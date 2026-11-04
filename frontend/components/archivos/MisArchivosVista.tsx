@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Topbar from "@/components/layout/Topbar";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
@@ -43,7 +44,6 @@ export default function MisArchivosVista() {
   const [rol, setRol] = useState<RolUsuario>("usuario");
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
-  const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [archivos, setArchivos] = useState<ArchivoUsuario[]>([]);
   const [errorLista, setErrorLista] = useState("");
 
@@ -104,11 +104,6 @@ export default function MisArchivosVista() {
   const porcentajeAlmacenamiento = Math.min((almacenamientoUsado / limiteAlmacenamiento) * 100, 100);
   const enlacesActivos = archivos.filter((archivo) => archivo.estadoEnlace === "Activo").length;
 
-  async function cerrarSesion() {
-    setCerrandoSesion(true);
-    await supabase.auth.signOut();
-    router.replace("/iniciar-sesion");
-  }
 
   if (cargando) {
     return (
@@ -120,39 +115,7 @@ export default function MisArchivosVista() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.topBar}>
-        <Link className={styles.brand} href="/mis-archivos" aria-label="SafeLinK, mis archivos">
-          <span className={styles.brandIcon} aria-hidden="true">S</span>
-          <span>SafeLinK</span>
-        </Link>
-
-        <nav className={styles.navigation} aria-label="Navegación principal">
-          <span className={styles.activeNav}>Mis archivos</span>
-          <Link className={styles.navLink} href="/subir-archivo">
-            Subir Archivo
-          </Link>
-          <span className={styles.disabledNav} aria-disabled="true" title="Disponible próximamente">
-            Compartir Enlace
-          </span>
-          {rol === "administrador" && (
-            <span className={styles.disabledNav} aria-disabled="true" title="Vista administrativa pendiente">
-              Administración <span className={styles.adminBadge}>ADMIN</span>
-            </span>
-          )}
-        </nav>
-
-        <div className={styles.account}>
-          <span className={styles.email} title={email}>{email}</span>
-          <button
-            className={styles.signOutButton}
-            type="button"
-            onClick={cerrarSesion}
-            disabled={cerrandoSesion}
-          >
-            {cerrandoSesion ? "Saliendo…" : "Cerrar sesión"}
-          </button>
-        </div>
-      </header>
+      <Topbar email={email} rol={rol} />
 
       <section className={styles.content} aria-labelledby="files-title">
         <div className={styles.heading}>
@@ -243,7 +206,7 @@ export default function MisArchivosVista() {
                       <div className={styles.fileCell}>
                         <span className={styles.fileIcon} aria-hidden="true">▤</span>
                         <span className={styles.fileName}>
-                          <strong>{archivo.nombre}</strong>
+                          <Link className={styles.shareLink} href={`/compartir-enlace?archivo=${encodeURIComponent(archivo.id)}`} title="Configurar enlaces de este archivo"><strong>{archivo.nombre}</strong></Link>
                           <small>{formatoTamano(archivo.tamanoBytes)}</small>
                         </span>
                       </div>
