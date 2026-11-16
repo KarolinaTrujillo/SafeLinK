@@ -1,5 +1,21 @@
 # Bitácora de actividades — SafeLinK
 
+### 2026-11-15 — Descarga pública y diagnóstico
+
+- Implementada la vista pública de descarga del frame 8-650, sin datos del emisor, con contraseña opcional y mensajes de bloqueo/error.
+- Nuevas rutas `/api/descargas/:token` para consultar disponibilidad y solicitar el archivo privado. Requieren aplicar `202611150001_public_downloads.sql` para reservas, bloqueo progresivo y finalización de descargas.
+- Se corrigió la lectura de parámetros de la ruta de Next.js para realizarla dentro de Suspense, como requiere la configuración de caché actual.
+- Se agregó diagnóstico seguro en el backend para identificar funciones de descarga ausentes, sin imprimir claves ni tokens.
+- Siete pruebas con Supabase simulado y TypeScript de frontend/backend pasaron. Karol aplicó la migración y confirmó mediante pruebas manuales: descarga real, contador, rechazo al agotar el cupo, ampliación del límite sin reiniciar el contador, contraseña incorrecta sin consumir descarga, vencimiento, bloqueo por intentos y revocación.
+- Las descargas simultáneas quedan pendientes por indicación de Karol. No se verificó todavía el escalamiento completo del bloqueo a 5 y 15 minutos ni su reinicio tras un acierto.
+- El evento finish del servidor indica fin del envío al sistema operativo, no confirma que la persona guardó/abrió el archivo. Si el proceso se interrumpe o falla el cierre de una reserva, puede quedar un cupo reservado: su recuperación todavía requiere revisión.
+
+### 2026-11-15 — Avisos para guardar credenciales
+
+- Se agregaron avisos en Configurar y compartir enlace para copiar la URL y la contraseña antes de salir: no vuelven a mostrarse al regresar, aunque sus valores sigan vigentes.
+- Debajo de la contraseña se indica que generar una nueva y guardar la configuración invalida la anterior.
+- Se reutilizan los estilos existentes del frontend; la lógica de guardado no cambia.
+
 > Registro vivo del trabajo. Actualizar estado, fecha, evidencia y decisiones al cerrar cada bloque. Las actividades marcadas como MVP pertenecen al alcance mínimo de la propuesta; las demás no se agregan sin acordarlo.
 
 ## Meta inmediata

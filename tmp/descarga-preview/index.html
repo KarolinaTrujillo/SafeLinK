@@ -1,0 +1,40 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Revisión visual local de descarga</title><style>:root{--page:#f7f8fc}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif}button,input{font:inherit}.page { min-height: 100vh; padding: 48px 24px 80px; background: radial-gradient(ellipse at 82% 53%, #e8f0ff 0, transparent 38%), radial-gradient(ellipse at 12% 8%, #edf2ff 0, transparent 35%), var(--page); color: #0b1c30; }
+.content { max-width: 1216px; margin: 0 auto; }
+.content h1 { margin: 0 auto 32px; font-size: 30px; line-height: 1.28; font-weight: 600; letter-spacing: -1px; text-align: center; }
+.card { width: 100%; max-width: 700px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 40px; box-shadow: 0 8px 40px #15335b05; }
+.file { display: flex; align-items: center; gap: 16px; padding: 24px; margin-bottom: 32px; background: #eff3ff; border-radius: 4px; }
+.fileIcon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; color: #0058be; background: #e0eaff; border-radius: 6px; }
+.fileDetails { min-width: 0; }
+.fileType { display: inline-block; font-size: 10px; font-weight: 600; color: #0058be; background: #d9e8ff; padding: 3px 7px; border-radius: 2px; letter-spacing: .5px; }
+.file h2 { margin: 7px 0 5px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.file p { margin: 0; font-size: 12px; color: #74777e; }
+.label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.label svg { width: 14px; height: 16px; color: #0058be; flex-shrink: 0; }
+.description { margin: 7px 0 24px; font-size: 12px; color: #74777e; line-height: 1.6; }
+.formRow { display: flex; gap: 12px; }
+.password { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; background: #f7f8fc; border-radius: 4px; padding: 0 12px; }
+.keyIcon { color: #74777e; font-size: 22px; }
+.password input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; padding: 15px 0; font-size: 14px; color: #0b1c30; }
+.password input::placeholder { color: #888b92; }
+.password:focus-within { outline: 2px solid #0058be; outline-offset: 2px; }
+.eye { display: flex; border: 0; background: transparent; padding: 4px; color: #74777e; cursor: pointer; }
+.eye svg { width: 20px; height: 20px; }
+.download { display: inline-flex; justify-content: center; align-items: center; gap: 9px; border: 0; border-radius: 4px; padding: 14px 22px; background: #00182c; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px #0014281a; }
+.download svg { width: 18px; height: 18px; }
+.download:hover:not(:disabled) { background: #123851; }
+.download:disabled, .eye:disabled { opacity: .55; cursor: not-allowed; }
+.notice { display: flex; align-items: center; gap: 8px; background: #e7eeff; border-radius: 4px; padding: 16px 12px; margin-top: 16px; color: #43474d; }
+.notice > svg { width: 15px; height: 15px; flex-shrink: 0; color: #74777e; }
+.notice p { margin: 0; flex: 1; font-size: 11px; line-height: 1.5; }
+.attempts { flex-shrink: 0; padding: 5px 10px; border-radius: 20px; background: #d7e6ff; font-size: 11px; font-weight: 600; }
+.error, .success { padding: 12px; margin: 16px 0 0; font-size: 13px; line-height: 1.6; border-radius: 4px; overflow-wrap: anywhere; }
+.error { background: #fff0f1; color: #a22030; }
+.success { background: #eaf7ef; color: #25623c; }
+.retry { color: inherit; border: 0; padding: 0; background: transparent; text-decoration: underline; cursor: pointer; }
+.status { color: #74777e; text-align: center; padding: 30px 0; }
+.unavailable { text-align: center; }
+.unavailable h2 { margin: 20px 0 12px; font-size: 22px; }
+.unavailable p { font-size: 14px; line-height: 1.6; color: #74777e; margin-bottom: 24px; }
+.download:focus-visible, .eye:focus-visible, .retry:focus-visible { outline: 2px solid #0058be; outline-offset: 4px; }
+@media (max-width: 600px) { .page { padding: 40px 16px; } .content h1 { font-size: 24px; margin-bottom: 24px; letter-spacing: -.6px; } .desktopBreak { display: none; } .card { padding: 24px 20px; } .file { padding: 16px; gap: 12px; } .file h2 { font-size: 16px; } .formRow { flex-direction: column; } .download { min-height: 48px; } .notice { flex-wrap: wrap; } .notice p { flex-basis: 80%; } .attempts { margin-left: 23px; } }
+</style><main class="page"><section class="content" aria-labelledby="titulo-descarga"><h1 id="titulo-descarga">Portal Seguro SafeLinK — Descarga protegida<br class="desktopBreak"/> de archivo</h1><div class="card"><div class="file"><span class="fileIcon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"></path><path d="M14 3v6h6M8 13h8M8 17h5"></path></svg></span><div class="fileDetails"><span class="fileType">DOCUMENTO PDF</span><h2>Documento_de_prueba.pdf</h2><p>Tamaño: 4.2 MB</p></div></div><form><label class="label" for="clave-descarga"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg> Este enlace requiere contraseña para su descarga</label><p class="description">Ingresa la clave proporcionada por el emisor para autorizar la transferencia del archivo.</p><div class="formRow"><div class="password"><span class="keyIcon" aria-hidden="true">⚿</span><input id="clave-descarga" type="password" required="" maxLength="128" autoComplete="off" placeholder="Ingresa la clave de acceso…" aria-describedby="aviso-intentos" value=""/><button type="button" class="eye" aria-label="Mostrar contraseña" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div><button class="download" type="submit"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 15v5h14v-5"></path></svg> Descargar archivo</button></div><div class="notice" id="aviso-intentos"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"></path><path d="M12 8v5m0 3h.01"></path></svg><p>Múltiples intentos fallidos provocarán un bloqueo temporal por seguridad.</p><span class="attempts">Intentos restantes: 5 de 5</span></div></form></div></section></main></html>

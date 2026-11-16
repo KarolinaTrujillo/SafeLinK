@@ -7,6 +7,7 @@ import { supabaseAdmin } from "./config/supabase.js";
 import { requireAuth } from "./middleware/auth.js";
 
 import { enlacesRouter } from "./routes/enlaces.js";
+import { descargasRouter } from "./routes/descargas.js";
 
 export const app = express();
 
@@ -24,6 +25,7 @@ app.use(helmet());
 app.use(cors({ origin: frontendUrl }));
 app.use(express.json({ limit: "1mb" }));
 app.use("/api/enlaces", enlacesRouter);
+app.use("/api/descargas", descargasRouter);
 
 app.get("/api/health", async (_request, response) => {
   const { error } = await supabaseAdmin

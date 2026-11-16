@@ -1,5 +1,40 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+export type ArchivoDescarga = {
+  nombre: string;
+  tipoMime: string;
+  tamanoBytes: number;
+  protegido: boolean;
+  intentosRestantes: number;
+  bloqueadoHasta: string | null;
+};
+
+export class ErrorDescarga extends Error {
+  constructor(message: string, public estado: number, public intentosRestantes?: number, public reintentarEn?: string) {
+    super(message);
+  }
+}
+
+async function errorDescarga(response: Response) {
+  const datos = await response.json().catch(() => ({}));
+  return new ErrorDescarga(datos.error || "No se pudo conectar con el servicio de descargas.", response.status, datos.intentosRestantes, datos.reintentarEn);
+}
+
+export async function consultarDescarga(token: string, signal?: AbortSignal): Promise<ArchivoDescarga> {
+  const response = await fetch(`${apiUrl}/api/descargas/${encodeURIComponent(token)}`, { cache: "no-store", referrerPolicy: "no-referrer", signal });
+  if (!response.ok) throw await errorDescarga(response);
+  return response.json();
+}
+
+export async function descargarArchivo(token: string, contrasena: string): Promise<Blob> {
+  const response = await fetch(`${apiUrl}/api/descargas/${encodeURIComponent(token)}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contrasena }),
+    cache: "no-store", referrerPolicy: "no-referrer",
+  });
+  if (!response.ok) throw await errorDescarga(response);
+  return response.blob();
+}
+
 export type RolUsuario = "usuario" | "administrador";
 
 export type PerfilAutenticado = {
