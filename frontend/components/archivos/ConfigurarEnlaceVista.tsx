@@ -96,7 +96,7 @@ export default function ConfigurarEnlaceVista() {
         const respuesta = await consultarEnlaces(await tokenActual(), archivoId);
         if (activo) {
           setEnlaces(respuesta.enlaces);
-          const ultimo = [...respuesta.enlaces].sort((a, b) => Date.parse(b.actualizado_en) - Date.parse(a.actualizado_en))[0];
+          const ultimo = respuesta.enlaces[0];
           aplicarEnlace(ultimo);
           setConsultaCompleta(true);
         }

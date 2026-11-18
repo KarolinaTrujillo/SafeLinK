@@ -8,6 +8,7 @@ import { requireAuth } from "./middleware/auth.js";
 
 import { enlacesRouter } from "./routes/enlaces.js";
 import { descargasRouter } from "./routes/descargas.js";
+import { adminRouter } from "./routes/admin.js";
 
 export const app = express();
 
@@ -26,6 +27,7 @@ app.use(cors({ origin: frontendUrl }));
 app.use(express.json({ limit: "1mb" }));
 app.use("/api/enlaces", enlacesRouter);
 app.use("/api/descargas", descargasRouter);
+app.use("/api/admin", adminRouter);
 
 app.get("/api/health", async (_request, response) => {
   const { error } = await supabaseAdmin
@@ -71,9 +73,9 @@ app.get("/api/archivos", requireAuth, async (_request, response) => {
   const { data: enlaces, error: errorEnlaces } = ids.length
     ? await supabaseAdmin
         .from("enlaces_compartidos")
-        .select("archivo_id, vence_en, maximo_descargas, descargas_realizadas, revocado_en, creado_en")
+        .select("archivo_id, vence_en, maximo_descargas, descargas_realizadas, revocado_en, creado_en, actualizado_en")
         .in("archivo_id", ids)
-        .order("creado_en", { ascending: false })
+        .order("actualizado_en", { ascending: false }).order("creado_en", { ascending: false }).order("id", { ascending: false })
     : { data: [], error: null };
 
   if (errorEnlaces) {

@@ -38,9 +38,9 @@ export default function Topbar({ email, rol }: Props) {
         <Link className={styles.navLink} href="/subir-archivo" aria-current={pathname === "/subir-archivo" ? "page" : undefined}>Subir Archivo</Link>
         <Link className={styles.navLink} href="/compartir-enlace" aria-current={pathname === "/compartir-enlace" ? "page" : undefined}>Compartir Enlace</Link>
         {rol === "administrador" && (
-          <span className={styles.disabledNav} aria-disabled="true" title="Vista administrativa pendiente">
+          <Link className={styles.navLink} href="/administracion" aria-current={pathname === "/administracion" ? "page" : undefined}>
             Administración <span className={styles.adminBadge}>ADMIN</span>
-          </span>
+          </Link>
         )}
       </nav>
       <div className={styles.account}>

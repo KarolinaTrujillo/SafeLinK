@@ -65,7 +65,8 @@ enlacesRouter.get("/archivo/:archivoId", async (request, response) => {
   const { data: archivo, error } = await supabaseAdmin.from("archivos").select("id").eq("id", id).eq("propietario_id", response.locals.userId).maybeSingle();
   if (error) return response.status(503).json({ error: "No se pudo consultar el archivo." });
   if (!archivo) return response.status(404).json({ error: "Archivo no disponible." });
-  const { data, error: errorEnlaces } = await supabaseAdmin.from("enlaces_compartidos").select(campos).eq("archivo_id", id).order("creado_en", { ascending: false });
+  const { data, error: errorEnlaces } = await supabaseAdmin.from("enlaces_compartidos").select(campos).eq("archivo_id", id)
+    .order("actualizado_en", { ascending: false }).order("creado_en", { ascending: false }).order("id", { ascending: false });
   if (errorEnlaces) return response.status(503).json({ error: "No se pudieron consultar los enlaces." });
   return response.json({ enlaces: (data ?? []).map(datosPublicos) });
 });
