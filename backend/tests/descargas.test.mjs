@@ -11,7 +11,7 @@ const { descargasRouter } = await import("../src/routes/descargas.ts");
 const token = "A".repeat(43);
 const hashClave = `scrypt:sal-de-prueba:${scryptSync("ClaveDePrueba!23", "sal-de-prueba", 64).toString("hex")}`;
 const enlace = {
-  id: "enlace", archivo_id: "archivo", hash_contrasena: hashClave,
+  id: "enlace", es_actual: true, archivo_id: "archivo", hash_contrasena: hashClave,
   vence_en: new Date(Date.now() + 86400000).toISOString(), maximo_descargas: 5,
   descargas_realizadas: 0, revocado_en: null, bloqueado_hasta: null, intentos_fallidos: 0,
 };
@@ -48,7 +48,7 @@ test("Tokens inválidos y enlaces revocados/vencidos/agotados no entregan metada
   const invalido = new Respuesta();
   await comprobar({ params: { token: "incorrecto" } }, invalido, () => assert.fail("No debe continuar"));
   assert.equal(invalido.code, 404);
-  for (const cambio of [{ revocado_en: new Date().toISOString() }, { vence_en: "2000-01-01" }, { descargas_realizadas: 5 }]) {
+  for (const cambio of [{ es_actual: false }, { revocado_en: new Date().toISOString() }, { vence_en: "2000-01-01" }, { descargas_realizadas: 5 }]) {
     actual = { ...enlace, ...cambio };
     const respuesta = new Respuesta();
     await comprobar({ params: { token } }, respuesta, () => assert.fail("No debe continuar"));

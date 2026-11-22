@@ -6,7 +6,7 @@ import { supabaseAdmin } from "../config/supabase.js";
 
 export const enlacesRouter = Router();
 const derivarClave = promisify(scrypt);
-const campos = "id, archivo_id, vence_en, maximo_descargas, descargas_realizadas, revocado_en, creado_en, actualizado_en, hash_contrasena";
+const campos = "id, archivo_id, vence_en, maximo_descargas, descargas_realizadas, revocado_en, creado_en, actualizado_en, hash_contrasena, es_actual";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const quinceDias = 15 * 24 * 60 * 60 * 1000;
 
@@ -65,7 +65,7 @@ enlacesRouter.get("/archivo/:archivoId", async (request, response) => {
   const { data: archivo, error } = await supabaseAdmin.from("archivos").select("id").eq("id", id).eq("propietario_id", response.locals.userId).maybeSingle();
   if (error) return response.status(503).json({ error: "No se pudo consultar el archivo." });
   if (!archivo) return response.status(404).json({ error: "Archivo no disponible." });
-  const { data, error: errorEnlaces } = await supabaseAdmin.from("enlaces_compartidos").select(campos).eq("archivo_id", id)
+  const { data, error: errorEnlaces } = await supabaseAdmin.from("enlaces_compartidos").select(campos).eq("archivo_id", id).eq("es_actual", true)
     .order("actualizado_en", { ascending: false }).order("creado_en", { ascending: false }).order("id", { ascending: false });
   if (errorEnlaces) return response.status(503).json({ error: "No se pudieron consultar los enlaces." });
   return response.json({ enlaces: (data ?? []).map(datosPublicos) });
@@ -88,6 +88,7 @@ enlacesRouter.post("/", async (request, response) => {
     vence_en: body.venceEn, maximo_descargas: body.maximoDescargas, hash_contrasena: hash,
     creado_en: creado, actualizado_en: creado,
   }).select(campos).single();
+  if (errorGuardar?.code === "23505" || errorGuardar?.code === "P0001") return response.status(409).json({ error: "Ya existe una configuración o el archivo cambió. Recarga la página para editarla." });
   if (errorGuardar || !enlace) return response.status(503).json({ error: "No se pudo guardar el enlace." });
   const base = process.env.FRONTEND_URL ?? "http://localhost:3000";
   return response.status(201).json({ enlace: datosPublicos(enlace), url: `${base.replace(/\/$/, "")}/descargar/${token}`, contrasena });
@@ -97,7 +98,7 @@ enlacesRouter.post("/", async (request, response) => {
 enlacesRouter.use("/:id", async (request, response, next) => {
   const id = String(request.params.id);
   if (!uuid.test(id)) return response.status(400).json({ error: "Enlace inválido." });
-  const { data: enlace, error } = await supabaseAdmin.from("enlaces_compartidos").select(campos).eq("id", id).maybeSingle();
+  const { data: enlace, error } = await supabaseAdmin.from("enlaces_compartidos").select(campos).eq("id", id).eq("es_actual", true).maybeSingle();
   if (error) return response.status(503).json({ error: "No se pudo consultar el enlace." });
   if (!enlace) return response.status(404).json({ error: "Enlace no disponible." });
   const { data: archivo, error: errorArchivo } = await supabaseAdmin.from("archivos").select("id, estado_limpieza").eq("id", enlace.archivo_id).eq("propietario_id", response.locals.userId).maybeSingle();
@@ -126,7 +127,7 @@ enlacesRouter.patch("/:id", async (request, response) => {
   const { data, error } = await supabaseAdmin.from("enlaces_compartidos").update({
     vence_en: body.venceEn, maximo_descargas: body.maximoDescargas, hash_contrasena: hash,
     actualizado_en: new Date().toISOString(),
-  }).eq("id", enlace.id).eq("actualizado_en", enlace.actualizado_en).is("revocado_en", null).select(campos).maybeSingle();
+  }).eq("id", enlace.id).eq("es_actual", true).eq("actualizado_en", enlace.actualizado_en).is("revocado_en", null).select(campos).maybeSingle();
   if (error || !data) return response.status(409).json({ error: "No se pudo actualizar. Recarga la configuración e inténtalo de nuevo." });
   return response.json({ enlace: datosPublicos(data), contrasena });
 });
@@ -135,7 +136,7 @@ enlacesRouter.post("/:id/revocar", async (_request, response) => {
   const enlace = response.locals.enlace;
   if (enlace.revocado_en) return response.json({ enlace: datosPublicos(enlace) });
   const ahora = new Date().toISOString();
-  const { data, error } = await supabaseAdmin.from("enlaces_compartidos").update({ revocado_en: ahora, actualizado_en: ahora }).eq("id", enlace.id).is("revocado_en", null).select(campos).maybeSingle();
+  const { data, error } = await supabaseAdmin.from("enlaces_compartidos").update({ revocado_en: ahora, actualizado_en: ahora }).eq("id", enlace.id).eq("es_actual", true).is("revocado_en", null).select(campos).maybeSingle();
   if (error || !data) return response.status(409).json({ error: "No se pudo revocar. Recarga la página." });
   return response.json({ enlace: datosPublicos(data) });
 });

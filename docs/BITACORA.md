@@ -139,3 +139,32 @@ Anota aquí cada decisión que cambie alcance o requisitos. Indicar fecha, motiv
 
 - Por corrección de la usuaria, se retiró la lista de enlaces de la pantalla. Al abrir un archivo se carga la configuración con actualización más reciente; guardar edita ese enlace.
 - Si la última configuración está revocada, se ofrece crear un enlace nuevo explícitamente. Los registros anteriores no se borran ni se revocan automáticamente.
+
+
+### 2026-11-21 — Limpieza diaria preparada, pendiente de instalación
+
+- Preparadas migración, Edge Function privada, modo de revisión, ejecución por lotes y script de Cron inicialmente en revisión.
+- Solo selecciona archivos con enlaces vencidos/revocados hace 10 días; conserva archivos sin enlaces y aquellos con un enlace no revocado y no vencido, aunque esté agotado/bloqueado. Revalida antes de reclamar y no elimina archivos con reservas de descarga.
+- Primero borra Storage y luego metadatos; los fallos conservan el cupo y se reintentan. Incluye purga por lotes de eventos de más de 60 días.
+- 11 pruebas con adaptador simulado y TypeScript del módulo puro pasaron. Deno y PostgreSQL/Storage reales pendientes. No se aplicaron migraciones ni se desplegó/activó la tarea.
+- Esta sesión permite escribir en Documents/Codex y no en la carpeta del proyecto; se entrega un parche para aplicarlo en SafeLinK, con guía en docs/LIMPIEZA.md.
+- Pruebas manuales confirmadas por Karol para administración: búsqueda, filtros, revocación, ocultación de la opción a usuarios normales y rechazo de navegación directa al panel. Actividad reciente y petición directa de la API con usuario normal siguen pendientes de confirmación.
+
+
+### 2026-11-22 — Una configuración actual por archivo
+
+Autorizado por Karol: usar una única configuración actual para cada archivo en Compartir enlace, Mis archivos, administración, descargas y limpieza. La migración `202611220001_current_link.sql` selecciona el último enlace editado (desempate por creación e ID), incluso si está revocado; revoca los anteriores y conserva sus filas históricas. Pendiente de aplicar en Supabase. No borra archivos ni inicia la limpieza.
+
+Guardar edita el mismo enlace y conserva URL, contraseña si no se reemplaza y descargas utilizadas. Solo una creación explícita tras revocar produce otra URL. Una restricción única y un trigger impiden dos configuraciones actuales y la edición/reactivación de enlaces históricos. La limpieza toma la fecha efectiva del enlace actual más 10 días, comprobando reservas de todos los enlaces. Esto reemplaza la regla anterior que calculaba el plazo con todos los enlaces. La migración de limpieza del 21 fue aplicada y su revisión SQL confirmada; el despliegue/activación de la tarea y las pruebas simultáneas siguen pendientes.
+
+Validación local: 17 pruebas de backend y 11 de limpieza aprobadas; TypeScript de backend/frontend y ESLint del componente modificado sin errores. Se agregó `supabase/tests/current_link.sql` para comprobar aislamiento A/B, reemplazo, historial, administración, reservas y limpieza; no se ejecutó contra PostgreSQL (sin psql y Docker apagado). Migración nueva no aplicada a Supabase. Sin commits ni push.
+
+
+### 2026-11-22 — Límite mínimo al editar
+
+Confirmado que editar conserva las descargas realizadas: con 3 utilizadas, los límites 1 y 2 se rechazan en backend y BD. La pantalla ahora deshabilita esos presets y explica que el límite es total, no descargas adicionales. El campo personalizado conserva el mínimo dinámico y la validación antes de enviar. Un límite de 3 deja 0 disponibles; aumentarlo a 5 deja 2. Se agregó una prueba de rechazo de límites inferiores sin escrituras. Esta mejora no necesita otra migración.
+
+
+### 2026-11-22 — Prueba manual de limpieza autorizada
+
+Karol confirmó aislamiento de configuraciones A/B y reemplazo de contraseña conservando URL. La consulta actual de limpieza devolvió únicamente 243733flayer.pdf, sin reservas y elegible desde el 14 de noviembre. Autorizó eliminarlo sin copia. El intento de revisión remota desde el agente falló por conexión, sin mutaciones. Se preparó backend/scripts/limpiar-archivo.mjs para ejecutar localmente el trabajador existente limitado a un ID, sin purgar eventos ni activar programación. Sintaxis y 11 pruebas del trabajador aprobadas; ejecución real pendiente del resultado en su equipo.

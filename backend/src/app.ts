@@ -74,7 +74,7 @@ app.get("/api/archivos", requireAuth, async (_request, response) => {
     ? await supabaseAdmin
         .from("enlaces_compartidos")
         .select("archivo_id, vence_en, maximo_descargas, descargas_realizadas, revocado_en, creado_en, actualizado_en")
-        .in("archivo_id", ids)
+        .in("archivo_id", ids).eq("es_actual", true)
         .order("actualizado_en", { ascending: false }).order("creado_en", { ascending: false }).order("id", { ascending: false })
     : { data: [], error: null };
 

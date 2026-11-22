@@ -199,3 +199,24 @@ El token se guarda como SHA-256 y la contraseña como scrypt con sal aleatoria. 
 La pantalla Compartir enlace muestra directamente la configuración guardada más recientemente para el archivo. Si no existe ninguna, permite crearla; si la última fue revocada, permite crear un enlace nuevo de manera explícita. Al subir un archivo se abre la configuración. Los enlaces existentes se conservan. La URL secreta y la contraseña originales solo se muestran al generarlas.
 
 El bloqueo y los intentos se comparten entre todos los visitantes del mismo enlace: no se identifican personas ni IP. Cada contraseña incorrecta suma un fallo; cinco fallos provocan 1 minuto de bloqueo, otros cinco tras esperar provocan 5 minutos y los siguientes grupos provocan 15 minutos. Durante el bloqueo no se aceptan contraseñas ni se suman intentos. Una autorización correcta con cupo disponible reinicia fallos y nivel. Sin un acierto, los fallos parciales no caducan por el mero paso del tiempo. La prueba de concurrencia queda pendiente por decisión de Karol.
+
+
+### 2026-11-21 — Limpieza de archivos y eventos
+
+Implementación preparada para una tarea diaria en Supabase Cron que invoca la Edge Function privada limpiar-archivos. Modo revision por defecto, sin escrituras ni borrados. El modo ejecutar se solicita explícitamente. Ver docs/LIMPIEZA.md para instalación, prueba, activación y límites. Aún no desplegada ni aplicada en Supabase.
+
+Se conservan los archivos sin enlaces. Los enlaces agotados y los bloqueados por contraseña no inician el borrado mientras no venzan ni se revoquen. Cuando todos dejan de servir por vencimiento/revocación, el plazo de 10 días se calcula desde la última fecha efectiva de fin. Se revisan todos los enlaces del archivo, no solo el mostrado en la interfaz. Renovar o crear un enlace antes de la reclamación cancela la programación.
+
+La limpieza reclama el archivo bajo bloqueo de BD, rechaza nuevas activaciones/reservas, elimina primero Storage y después los metadatos. Si falla conserva el cupo ocupado; los reintentos usan un token con exclusión de 15 minutos. No se eliminan archivos con reservas de descarga: su recuperación segura continúa pendiente. El lote está limitado a 20 archivos y 5000 eventos de más de 60 días.
+
+
+### 2026-11-22 — Una configuración actual por archivo
+
+Autorizado por Karol: usar una única configuración actual para cada archivo en Compartir enlace, Mis archivos, administración, descargas y limpieza. La migración `202611220001_current_link.sql` selecciona el último enlace editado (desempate por creación e ID), incluso si está revocado; revoca los anteriores y conserva sus filas históricas. Pendiente de aplicar en Supabase. No borra archivos ni inicia la limpieza.
+
+Guardar edita el mismo enlace y conserva URL, contraseña si no se reemplaza y descargas utilizadas. Solo una creación explícita tras revocar produce otra URL. Una restricción única y un trigger impiden dos configuraciones actuales y la edición/reactivación de enlaces históricos. La limpieza toma la fecha efectiva del enlace actual más 10 días, comprobando reservas de todos los enlaces. Esto reemplaza la regla anterior que calculaba el plazo con todos los enlaces. La migración de limpieza del 21 fue aplicada y su revisión SQL confirmada; el despliegue/activación de la tarea y las pruebas simultáneas siguen pendientes.
+
+
+### 2026-11-22 — Límite mínimo al editar
+
+Confirmado que editar conserva las descargas realizadas: con 3 utilizadas, los límites 1 y 2 se rechazan en backend y BD. La pantalla ahora deshabilita esos presets y explica que el límite es total, no descargas adicionales. El campo personalizado conserva el mínimo dinámico y la validación antes de enviar. Un límite de 3 deja 0 disponibles; aumentarlo a 5 deja 2. Se agregó una prueba de rechazo de límites inferiores sin escrituras. Esta mejora no necesita otra migración.

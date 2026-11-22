@@ -96,8 +96,8 @@ export default function ConfigurarEnlaceVista() {
         const respuesta = await consultarEnlaces(await tokenActual(), archivoId);
         if (activo) {
           setEnlaces(respuesta.enlaces);
-          const ultimo = respuesta.enlaces[0];
-          aplicarEnlace(ultimo);
+          const actual = respuesta.enlaces[0];
+          aplicarEnlace(actual);
           setConsultaCompleta(true);
         }
       } catch {
@@ -146,7 +146,7 @@ export default function ConfigurarEnlaceVista() {
     setOcupado(true);
     try {
       const data = await guardarEnlace(await tokenActual(), { archivoId, venceEn: new Date(vence).toISOString(), maximoDescargas: maximo, protegido, ...(protegido && borradorClave ? { contrasena: borradorClave } : {}), ...(enlace ? { actualizadoEn: enlace.actualizado_en } : {}) }, enlace?.id);
-      setEnlaces((actuales) => [data.enlace, ...actuales.filter((item) => item.id !== data.enlace.id)]);
+      setEnlaces([data.enlace]);
       setEnlaceId(data.enlace.id);
       setCredenciales((actuales) => ({ url: data.url ?? actuales.url, contrasena: protegido ? data.contrasena ?? actuales.contrasena : "" }));
       setBorradorClave("");
@@ -207,7 +207,8 @@ export default function ConfigurarEnlaceVista() {
             </div>
             <fieldset className={styles.downloads}>
               <legend>Límite de descargas permitidas</legend>
-              <div className={styles.options}>{["1", "3", "5", "10", "personalizado"].map((valor) => <button type="button" key={valor} aria-pressed={limite === valor} className={limite === valor ? styles.selected : ""} onClick={() => setLimite(valor)}>{valor === "personalizado" ? "Personalizado" : `${valor} ${valor === "1" ? "descarga" : "descargas"}`}</button>)}</div>
+              <div className={styles.options}>{["1", "3", "5", "10", "personalizado"].map((valor) => <button type="button" key={valor} disabled={valor !== "personalizado" && Number(valor) < usadas} aria-pressed={limite === valor} className={limite === valor ? styles.selected : ""} onClick={() => setLimite(valor)}>{valor === "personalizado" ? "Personalizado" : `${valor} ${valor === "1" ? "descarga" : "descargas"}`}</button>)}</div>
+              {usadas > 0 && <p className={styles.hint}>Ya se realizaron {usadas} descargas. El límite total no puede ser menor que {usadas}; cambiarlo no reinicia el contador.</p>}
               {limite === "personalizado" && <input type="number" aria-label="Máximo de descargas" min={Math.max(1, usadas)} max={20} required value={limitePersonalizado} onChange={(event) => setLimitePersonalizado(event.target.value)} />}
             </fieldset>
             <div className={styles.protection}>

@@ -28,10 +28,10 @@ descargasRouter.use("/:token", async (request, response, next) => {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return response.status(404).json({ error: mensajeNoDisponible });
   const hash = createHash("sha256").update(token).digest("hex");
   const { data: enlace, error } = await supabaseAdmin.from("enlaces_compartidos")
-    .select("id, archivo_id, hash_contrasena, vence_en, maximo_descargas, descargas_realizadas, revocado_en, bloqueado_hasta, intentos_fallidos")
+    .select("id, archivo_id, hash_contrasena, vence_en, maximo_descargas, descargas_realizadas, revocado_en, es_actual, bloqueado_hasta, intentos_fallidos")
     .eq("hash_token", hash).maybeSingle();
   if (error) return response.status(503).json({ error: "No se pudo consultar el enlace. Inténtalo más tarde." });
-  if (!enlace || enlace.revocado_en || Date.parse(enlace.vence_en) <= Date.now() || enlace.descargas_realizadas >= enlace.maximo_descargas) {
+  if (!enlace || !enlace.es_actual || enlace.revocado_en || Date.parse(enlace.vence_en) <= Date.now() || enlace.descargas_realizadas >= enlace.maximo_descargas) {
     return response.status(404).json({ error: mensajeNoDisponible });
   }
   const { data: archivo, error: errorArchivo } = await supabaseAdmin.from("archivos")
