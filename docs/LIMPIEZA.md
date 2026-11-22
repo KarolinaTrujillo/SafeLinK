@@ -73,3 +73,28 @@ Karol autorizó eliminar `243733flayer.pdf` (345103c7-3a9b-4c31-9c56-2d6114b12c6
 Desde la carpeta backend ejecutar `node --import tsx scripts/limpiar-archivo.mjs 345103c7-3a9b-4c31-9c56-2d6114b12c6c ejecutar`. Sin el último argumento solo revisa. Usa backend/.env sin imprimir claves. Reutiliza el trabajador de limpieza, filtra el plan a ese ID y vuelve a validar bajo bloqueo. No purga eventos ni despliega o activa Cron. La preparación puede recalcular plazos de otros candidatos, pero solo se intenta borrar el ID indicado. Si el archivo no está en los primeros 20 candidatos devueltos por la revisión, no se intenta borrar.
 
 Confirmar `borrados: 1`, `errores: 0` y `archivoEliminado: true`; después verificar que no aparece en Mis archivos ni en Storage. Un error o un archivo omitido no confirma eliminación.
+
+
+## Actualización: eliminación manual y estadísticas de rechazos (2026-11-22)
+
+Preparado localmente; pendiente aplicar `supabase/migrations/202611220002_delete_files_rejections.sql`. Aplicar solamente esta migración nueva después de las anteriores. Añade `eliminacion_solicitada_en` y funciones privadas para solicitar borrado y registrar rechazos, y actualiza la vista de candidatos, el cierre, la reserva de descargas y las métricas administrativas. Aplicarla no solicita eliminaciones ni borra objetos existentes.
+
+El propietario solicita DELETE /api/archivos/:id desde Mis archivos y confirma. La identidad procede del Bearer token validado, nunca del cuerpo de la petición. Bajo bloqueo del archivo se comprueba la propiedad, que no haya una reclamación vigente ni reservas de ningún enlace. Una reserva activa produce 409 sin desactivar el archivo. Una solicitud aceptada marca pendiente y bloquea nuevas descargas/activaciones antes de tocar Storage. Se elimina el objeto y después se confirman metadatos/evento con el token de reclamación. El cupo permanece ocupado hasta finalizar. Esta solicitud explícita no espera los 10 días de retención automática.
+
+Si Storage falla, el propietario puede reintentar; la limpieza diaria también recupera el trabajo porque la vista incluye solicitudes manuales, incluso archivos sin enlaces. Si el objeto fue borrado pero falló el cierre, se conserva la reclamación durante 15 minutos y después se recupera de forma idempotente. Los eventos de eliminación permanecen con referencias nulas tras borrar el archivo. La eliminación manual no purga eventos antiguos por su cuenta.
+
+La Edge Function y Cron existentes NO necesitan volver a desplegarse: usan la misma vista y las mismas firmas RPC. A partir de la migración, la tarea diaria también puede completar solicitudes manuales pendientes. Los archivos sin enlaces siguen conservándose salvo que su propietario solicite eliminarlos explícitamente.
+
+Los rechazos se registran en solicitudes POST de descarga: contraseña incorrecta/inválida, bloqueo, expiración, revocación, agotamiento, cupo reservado, configuración cambiada y archivo/enlace no disponible. Los GET de consulta o recarga no crean eventos. Los rechazos nuevos usan tipo descarga y resultado rechazado; se conservan los históricos intento_contrasena. La métrica administrativa incluye ambos tipos rechazados de los últimos 60 días y excluye errores operativos de limpieza/eliminación. No se reconstruyen retroactivamente intentos que nunca se registraron. No se guardan contraseñas, tokens ni IP en los eventos.
+
+Orden de actualización: (1) aplicar la migración en SQL Editor; (2) probar localmente ambos componentes; (3) subir código y migración a la rama desplegada para actualizar Render y Vercel; (4) repetir pruebas con archivo desechable en el sitio público. No volver a ejecutar migraciones anteriores. Conservar copia si interesa mantener el archivo: eliminarlo es definitivo.
+
+Pruebas manuales de cierre:
+
+- Cancelar confirmación: conserva archivo y contador. Confirmar: desaparece de Mis archivos y Storage, libera cuota e inutiliza su URL pública; aparece evento eliminación exitoso.
+- DELETE sin sesión: 401. DELETE de archivo de otra cuenta: 404, sin tocar Storage.
+- Una descarga con reserva activa impide DELETE con 409; después de finalizar se puede borrar.
+- Contraseña errónea suma un rechazo y ninguna descarga. GET/reload no suma. POST de enlace vencido/revocado/agotado o bloqueado suma una vez y muestra el motivo en Actividad reciente.
+- Fallos de Storage y del cierre se prueban con mocks locales; las pruebas SQL de rollback (`supabase/tests/delete_files_rejections.sql`) SOLO en una base desechable, nunca producción. No se han ejecutado aquí por no tener PostgreSQL/Docker activo.
+
+Validación local final: 28 pruebas del backend y 11 del trabajador de limpieza aprobadas; compilación TypeScript del backend, TypeScript del frontend y ESLint de los archivos frontend modificados aprobados. `git diff --check` sin errores. El build de producción del frontend no se completó: Turbopack falló al iniciar el subproceso CSS en este entorno; debe verificarse antes de publicar. La migración y las pruebas SQL siguen pendientes de ejecución en PostgreSQL. No se aplicaron cambios remotos ni se borraron archivos reales.

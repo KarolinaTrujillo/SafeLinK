@@ -8,6 +8,7 @@ import { requireAuth } from "./middleware/auth.js";
 
 import { enlacesRouter } from "./routes/enlaces.js";
 import { descargasRouter } from "./routes/descargas.js";
+import { archivosRouter } from "./routes/archivos.js";
 import { adminRouter } from "./routes/admin.js";
 
 export const app = express();
@@ -61,7 +62,7 @@ app.get("/api/archivos", requireAuth, async (_request, response) => {
   const userId = response.locals.userId as string;
   const { data: archivos, error } = await supabaseAdmin
     .from("archivos")
-    .select("id, nombre_original, tipo_mime, tamano_bytes, creado_en")
+    .select("id, nombre_original, tipo_mime, tamano_bytes, creado_en, estado_limpieza, eliminacion_solicitada_en")
     .eq("propietario_id", userId)
     .order("creado_en", { ascending: false });
 
@@ -86,7 +87,8 @@ app.get("/api/archivos", requireAuth, async (_request, response) => {
     const enlace = (enlaces ?? []).find((item) => item.archivo_id === archivo.id);
     let estadoEnlace = "Sin enlace";
 
-    if (enlace?.revocado_en) estadoEnlace = "Revocado";
+    if (archivo.estado_limpieza === "pendiente_limpieza") estadoEnlace = "Pendiente de eliminación";
+    else if (enlace?.revocado_en) estadoEnlace = "Revocado";
     else if (enlace && new Date(enlace.vence_en).getTime() <= Date.now()) estadoEnlace = "Vencido";
     else if (enlace && enlace.descargas_realizadas >= enlace.maximo_descargas) estadoEnlace = "Límite alcanzado";
     else if (enlace) estadoEnlace = "Activo";
@@ -98,6 +100,8 @@ app.get("/api/archivos", requireAuth, async (_request, response) => {
       tamanoBytes: Number(archivo.tamano_bytes),
       creadoEn: archivo.creado_en,
       estadoEnlace,
+      estadoLimpieza: archivo.estado_limpieza,
+      eliminacionSolicitada: Boolean(archivo.eliminacion_solicitada_en),
     };
   });
 
@@ -184,3 +188,5 @@ app.post(
     return response.status(201).json({ id: archivoId, nombre: nombreOriginal });
   },
 );
+
+app.use("/api/archivos", archivosRouter);

@@ -71,7 +71,11 @@ test("La contraseña se verifica con scrypt y un rechazo no consulta Storage", a
 });
 
 test("El bloqueo se respeta antes de comprobar la contraseña", async (t) => {
-  t.mock.method(supabaseAdmin, "rpc", () => assert.fail("No debe reservar"));
+  t.mock.method(supabaseAdmin, "rpc", async (nombre, args) => {
+    assert.equal(nombre, "registrar_rechazo_descarga");
+    assert.equal(args.p_motivo, "Bloqueo temporal");
+    return { error: null };
+  });
   const respuesta = new Respuesta();
   respuesta.locals = { ...respuesta.locals, enlace: { ...enlace, bloqueado_hasta: new Date(Date.now() + 60000).toISOString() } };
   await ruta("post")({ body: { contrasena: "incorrecta" } }, respuesta);
@@ -119,4 +123,62 @@ test("Un fallo de Storage libera la reserva sin sumar una descarga", async (t) =
   await ruta("post")({ body: { contrasena: "ClaveDePrueba!23" } }, respuesta);
   assert.equal(respuesta.code, 503);
   assert.deepEqual(cierres, [{ p_reserva_id: "reserva", p_exito: false }]);
+});
+
+
+test("Los rechazos por enlace inválido solo se registran en POST, sin guardar el token", async (t) => {
+  const registros = [];
+  t.mock.method(supabaseAdmin, "rpc", async (nombre, args) => { registros.push([nombre, args]); return { error: null }; });
+  for (const method of ["GET", "POST"]) {
+    const respuesta = new Respuesta();
+    await comprobar({ method, params: { token: "invalido" } }, respuesta, () => assert.fail("No debe continuar"));
+    assert.equal(respuesta.code, 404);
+  }
+  assert.deepEqual(registros, [["registrar_rechazo_descarga", { p_enlace_id: null, p_motivo: "Enlace no disponible" }]]);
+});
+
+test("Vencimiento, revocación y cupo agotado registran exactamente un rechazo de descarga", async (t) => {
+  let actual;
+  t.mock.method(supabaseAdmin, "from", () => {
+    const q = { select() { return q; }, eq() { return q; }, maybeSingle: async () => ({ data: actual, error: null }) }; return q;
+  });
+  const registros = [];
+  t.mock.method(supabaseAdmin, "rpc", async (_nombre, args) => { registros.push(args); return { error: null }; });
+  for (const [cambio, motivo] of [
+    [{ vence_en: "2000-01-01" }, "Enlace vencido"],
+    [{ revocado_en: "2000-01-01" }, "Enlace revocado"],
+    [{ descargas_realizadas: 5 }, "Límite de descargas alcanzado"],
+  ]) {
+    actual = { ...enlace, ...cambio };
+    await comprobar({ method: "GET", params: { token } }, new Respuesta(), () => assert.fail("No debe continuar"));
+    const count = registros.length;
+    const res = new Respuesta();
+    await comprobar({ method: "POST", params: { token } }, res, () => assert.fail("No debe continuar"));
+    assert.equal(res.code, 404);
+    assert.equal(registros.length, count + 1);
+    assert.deepEqual(registros.at(-1), { p_enlace_id: enlace.id, p_motivo: motivo });
+  }
+});
+
+test("Un fallo del registro de rechazos no autoriza ni consulta Storage", async (t) => {
+  t.mock.method(supabaseAdmin, "rpc", async () => ({ error: { code: "simulado" } }));
+  t.mock.method(supabaseAdmin.storage, "from", () => assert.fail("No debe descargar"));
+  const res = new Respuesta();
+  await comprobar({ method: "POST", params: { token: "invalido" } }, res, () => assert.fail("No debe continuar"));
+  assert.equal(res.code, 503);
+});
+
+
+test("Un archivo pendiente de eliminación no entrega datos ni permite reservar", async t => {
+  t.mock.method(supabaseAdmin, "from", table => {
+    const q = { select() { return q; }, eq() { return q; }, maybeSingle: async () => ({ data: table === "enlaces_compartidos" ? enlace : { ...archivo, estado_limpieza: "pendiente_limpieza" }, error: null }) }; return q;
+  });
+  const registros = [];
+  t.mock.method(supabaseAdmin, "rpc", async (nombre, args) => { assert.equal(nombre, "registrar_rechazo_descarga"); registros.push(args); return { error: null }; });
+  for (const method of ["GET", "POST"]) {
+    const res = new Respuesta();
+    await comprobar({ method, params: { token } }, res, () => assert.fail("No debe autorizar"));
+    assert.equal(res.code, 404); assert.equal(res.body.nombre, undefined);
+  }
+  assert.deepEqual(registros, [{ p_enlace_id: enlace.id, p_motivo: "Archivo no disponible" }]);
 });

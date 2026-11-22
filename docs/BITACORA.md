@@ -206,3 +206,14 @@ Karol eligió Vercel para frontend y Render para backend. Actualizó next y esli
 ### 2026-11-22 — Exclusiones antes de publicar
 
 Karol aportó npm audit --omit=dev del frontend: 0 vulnerabilidades. Se excluyeron /.postman/, /postman/ y /tmp/pruebas-carga/ del Git raíz; no se borraron archivos ni se modificó el índice de Git. Se conservan .env.example, código, lockfiles, documentación, migraciones, pruebas del proyecto y Cron. Las previsualizaciones ya versionadas en otras subcarpetas tmp no se retiraron en esta operación. Sin commit ni push.
+
+
+### 2026-11-22 — Eliminación manual y rechazos completos
+
+Implementación solicitada explícitamente por Karol. Nueva migración `202611220002_delete_files_rejections.sql`, pendiente de aplicar: solicitud privada de borrado por propietario, exclusión de reservas y reclamaciones, recuperación manual/automática de pendientes y conteo administrativo exclusivo de rechazos de descarga. Reutiliza tablas/eventos/leases de limpieza; añade una columna y no borra archivos al aplicarse. SQL de reserva y registro mantiene orden de bloqueo archivo antes de enlace. No se tocó el bloqueo compartido progresivo 1/5/15 minutos.
+
+Mis archivos incorpora Eliminar archivo con confirmación y actualización de contador solo al completar Storage y cierre; fallos conservan cuota y permiten reintento. Pendientes no permiten abrir configuración ni guardar cambios. DELETE /api/archivos/:id usa identidad verificada del propietario, impide descargas en curso y no expone ruta ni token interno. Limpieza y Cron ya desplegados pueden recuperar pendientes sin cambiar su código.
+
+El registro de rechazos solo ocurre en POST de descarga. GET no cuenta. Nuevos rechazos incluyen vencimiento, revocación, límite agotado, bloqueo, cupo ocupado y enlace/archivo no disponible; motivos fijos sin secretos. Métrica de últimos 60 días excluye fallos de limpieza/eliminación, conserva históricos de contraseñas erróneas y no inventa datos anteriores.
+
+Pendiente validar migración en BD y flujo visual/integración real antes del despliegue. No se ejecutó SQL remoto, no se borraron archivos reales y no se hizo commit ni push. Instrucciones de actualización en docs/LIMPIEZA.md.

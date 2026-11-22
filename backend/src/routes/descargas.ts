@@ -8,6 +8,16 @@ const derivarClave = promisify(scrypt);
 let verificacionesEnCurso = 0;
 const mensajeNoDisponible = "El enlace no está disponible. Solicita uno nuevo a quien te lo compartió.";
 
+// Fallar cerrado si no es posible registrar un intento rechazado.
+async function registrarRechazo(response: import("express").Response, id: string | null, motivo: string) {
+  const { error } = await supabaseAdmin.rpc("registrar_rechazo_descarga", { p_enlace_id: id, p_motivo: motivo });
+  if (error) {
+    response.status(503).json({ error: "No se pudo procesar el intento de descarga. Inténtalo más tarde." });
+    return false;
+  }
+  return true;
+}
+
 async function claveCorrecta(clave: string, guardada: string | null) {
   if (!guardada) return true;
   const [algoritmo, sal, hash] = guardada.split(":");
@@ -25,19 +35,27 @@ descargasRouter.use((_request, response, next) => {
 
 descargasRouter.use("/:token", async (request, response, next) => {
   const token = String(request.params.token);
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return response.status(404).json({ error: mensajeNoDisponible });
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
+    if (request.method === "POST" && !await registrarRechazo(response, null, "Enlace no disponible")) return;
+    return response.status(404).json({ error: mensajeNoDisponible });
+  }
   const hash = createHash("sha256").update(token).digest("hex");
   const { data: enlace, error } = await supabaseAdmin.from("enlaces_compartidos")
     .select("id, archivo_id, hash_contrasena, vence_en, maximo_descargas, descargas_realizadas, revocado_en, es_actual, bloqueado_hasta, intentos_fallidos")
     .eq("hash_token", hash).maybeSingle();
   if (error) return response.status(503).json({ error: "No se pudo consultar el enlace. Inténtalo más tarde." });
   if (!enlace || !enlace.es_actual || enlace.revocado_en || Date.parse(enlace.vence_en) <= Date.now() || enlace.descargas_realizadas >= enlace.maximo_descargas) {
+    const motivo = !enlace || !enlace.es_actual ? "Enlace no disponible" : enlace.revocado_en ? "Enlace revocado" : Date.parse(enlace.vence_en) <= Date.now() ? "Enlace vencido" : "Límite de descargas alcanzado";
+    if (request.method === "POST" && !await registrarRechazo(response, enlace?.id ?? null, motivo)) return;
     return response.status(404).json({ error: mensajeNoDisponible });
   }
   const { data: archivo, error: errorArchivo } = await supabaseAdmin.from("archivos")
     .select("nombre_original, tipo_mime, tamano_bytes, estado_limpieza").eq("id", enlace.archivo_id).maybeSingle();
   if (errorArchivo) return response.status(503).json({ error: "No se pudo consultar el archivo. Inténtalo más tarde." });
-  if (!archivo || archivo.estado_limpieza !== "activo") return response.status(404).json({ error: mensajeNoDisponible });
+  if (!archivo || archivo.estado_limpieza !== "activo") {
+    if (request.method === "POST" && !await registrarRechazo(response, enlace.id, "Archivo no disponible")) return;
+    return response.status(404).json({ error: mensajeNoDisponible });
+  }
   response.locals.enlace = enlace;
   response.locals.archivo = archivo;
   response.locals.hashToken = hash;
@@ -56,9 +74,13 @@ descargasRouter.get("/:token", (_request, response) => {
 
 descargasRouter.post("/:token", async (request, response) => {
   const clave = request.body?.contrasena ?? "";
-  if (typeof clave !== "string" || clave.length > 128) return response.status(400).json({ error: "La contraseña no es válida." });
+  if (typeof clave !== "string" || clave.length > 128) {
+    if (!await registrarRechazo(response, response.locals.enlace.id, "Contraseña inválida")) return;
+    return response.status(400).json({ error: "La contraseña no es válida." });
+  }
   const enlace = response.locals.enlace;
   if (enlace.bloqueado_hasta && Date.parse(enlace.bloqueado_hasta) > Date.now()) {
+    if (!await registrarRechazo(response, enlace.id, "Bloqueo temporal")) return;
     return response.status(429).json({ error: "Acceso bloqueado temporalmente por intentos fallidos.", reintentarEn: enlace.bloqueado_hasta });
   }
   if (verificacionesEnCurso >= 4) return response.status(503).json({ error: "El servicio está ocupado. Inténtalo en unos momentos." });

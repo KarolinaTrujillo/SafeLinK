@@ -49,6 +49,8 @@ export type ArchivoUsuario = {
   tamanoBytes: number;
   creadoEn: string;
   estadoEnlace: string;
+  estadoLimpieza: "activo" | "pendiente_limpieza";
+  eliminacionSolicitada: boolean;
 };
 
 async function mensajeError(response: Response, mensajePredeterminado: string) {
@@ -171,4 +173,11 @@ export function guardarEnlace(token: string, configuracion: ConfiguracionEnlace,
 }
 export function revocarEnlace(token: string, id: string) {
   return peticionEnlaces<ResultadoEnlace>(token, `/${encodeURIComponent(id)}/revocar`, "POST");
+}
+
+export async function eliminarArchivo(accessToken: string, id: string): Promise<void> {
+  const response = await fetch(`${apiUrl}/api/archivos/${encodeURIComponent(id)}`, {
+    method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store",
+  });
+  if (!response.ok) throw new Error(await mensajeError(response, "No se pudo eliminar el archivo."));
 }

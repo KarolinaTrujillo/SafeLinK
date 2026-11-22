@@ -444,3 +444,13 @@
 
 .shareLink { color: inherit; text-decoration: none; }
 .shareLink:hover { text-decoration: underline; color: #0060c9; }
+
+.deleteButton { border: 1px solid #f3cccc; border-radius: 5px; background: #fff1f1; color: #a22222; padding: 8px 10px; cursor: pointer; white-space: nowrap; font: inherit; }
+.deleteButton:disabled, .confirmDelete button:disabled { opacity: .5; cursor: not-allowed; }
+.deleteButton:focus-visible, .confirmDelete button:focus-visible { outline: 2px solid #1769e8; outline-offset: 3px; }
+.confirmDelete { margin-bottom: 20px; padding: 20px; background: #fff1f1; color: #752020; border: 1px solid #f3cccc; border-radius: 8px; }
+.confirmDelete h2 { font-size: 18px; margin: 0 0 10px; overflow-wrap: anywhere; }
+.confirmDelete p { margin: 0 0 14px; line-height: 1.6; }
+.confirmDelete button { border: 1px solid #e0c5c5; border-radius: 5px; background: white; color: #752020; padding: 10px 14px; margin-right: 10px; cursor: pointer; }
+.confirmDelete button:first-of-type { color: white; background: #a22222; border-color: #a22222; }
+.successNotice { padding: 14px 18px; margin-bottom: 20px; background: #eaf7ee; color: #225f43; border-radius: 6px; }

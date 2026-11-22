@@ -251,3 +251,14 @@ Solicita desplegar antes de la prueba entre personas. Compilación backend aprob
 ### 2026-11-22 — Build de producción confirmado en el equipo de Karol
 
 Karol eligió Vercel para frontend y Render para backend. Actualizó next y eslint-config-next a 16.4.6, reflejados en package.json y package-lock.json. El último resultado aportado de npm run build muestra compilación, TypeScript, recolección de datos, generación 11/11 y optimización completadas. Errores anteriores de módulos internos aparecieron durante cambios de node_modules en el servidor de desarrollo; el build final fue correcto y no requiere editar esos imports. Backend compilado previamente. Falta revisar las 7 vulnerabilidades moderadas reportadas por npm (separar producción/desarrollo), sincronizar los cambios seleccionados con GitHub sin incluir secretos/artefactos, desplegar Render y Vercel y comprobar las URLs públicas. No se realizaron commits, push ni despliegue del sitio desde el agente.
+
+
+### 2026-11-22 — Eliminación manual y rechazos completos
+
+Implementación solicitada explícitamente por Karol. Nueva migración `202611220002_delete_files_rejections.sql`, pendiente de aplicar: solicitud privada de borrado por propietario, exclusión de reservas y reclamaciones, recuperación manual/automática de pendientes y conteo administrativo exclusivo de rechazos de descarga. Reutiliza tablas/eventos/leases de limpieza; añade una columna y no borra archivos al aplicarse. SQL de reserva y registro mantiene orden de bloqueo archivo antes de enlace. No se tocó el bloqueo compartido progresivo 1/5/15 minutos.
+
+Mis archivos incorpora Eliminar archivo con confirmación y actualización de contador solo al completar Storage y cierre; fallos conservan cuota y permiten reintento. Pendientes no permiten abrir configuración ni guardar cambios. DELETE /api/archivos/:id usa identidad verificada del propietario, impide descargas en curso y no expone ruta ni token interno. Limpieza y Cron ya desplegados pueden recuperar pendientes sin cambiar su código.
+
+El registro de rechazos solo ocurre en POST de descarga. GET no cuenta. Nuevos rechazos incluyen vencimiento, revocación, límite agotado, bloqueo, cupo ocupado y enlace/archivo no disponible; motivos fijos sin secretos. Métrica de últimos 60 días excluye fallos de limpieza/eliminación, conserva históricos de contraseñas erróneas y no inventa datos anteriores.
+
+Pendiente validar migración en BD y flujo visual/integración real antes del despliegue. No se ejecutó SQL remoto, no se borraron archivos reales y no se hizo commit ni push. Instrucciones de actualización en docs/LIMPIEZA.md.

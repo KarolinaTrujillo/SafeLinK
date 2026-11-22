@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Topbar from "@/components/layout/Topbar";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   obtenerArchivos,
+  eliminarArchivo,
   obtenerPerfilEnBackend,
   type ArchivoUsuario,
   type RolUsuario,
@@ -46,6 +47,17 @@ export default function MisArchivosVista() {
   const [busqueda, setBusqueda] = useState("");
   const [archivos, setArchivos] = useState<ArchivoUsuario[]>([]);
   const [errorLista, setErrorLista] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [confirmacion, setConfirmacion] = useState<ArchivoUsuario | null>(null);
+  const [eliminando, setEliminando] = useState(false);
+  const confirmacionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (confirmacion) {
+      confirmacionRef.current?.focus({ preventScroll: true });
+      confirmacionRef.current?.scrollIntoView({ block: "center" });
+    }
+  }, [confirmacion]);
 
   useEffect(() => {
     let activo = true;
@@ -90,6 +102,27 @@ export default function MisArchivosVista() {
       data.subscription.unsubscribe();
     };
   }, [router]);
+
+  async function confirmarEliminacion() {
+    if (!confirmacion || eliminando) return;
+    const archivo = confirmacion;
+    setEliminando(true); setErrorLista(""); setMensaje("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) { router.replace("/iniciar-sesion"); return; }
+      try {
+        await eliminarArchivo(data.session.access_token, archivo.id);
+        setArchivos((actuales) => actuales.filter((item) => item.id !== archivo.id));
+        setMensaje(`Se eliminó «${archivo.nombre}» y se liberó su espacio.`);
+      } catch (fallo) {
+        setErrorLista(fallo instanceof Error ? fallo.message : "No se pudo eliminar el archivo.");
+        // Un fallo de Storage conserva el cupo y debe mostrar el estado pendiente real.
+        try { setArchivos(await obtenerArchivos(data.session.access_token)); } catch { /* Conservar la última lista. */ }
+      }
+    } catch {
+      setErrorLista("No se pudo comprobar tu sesión. Inténtalo de nuevo.");
+    } finally { setEliminando(false); setConfirmacion(null); }
+  }
 
   const archivosFiltrados = useMemo(
     () =>
@@ -172,6 +205,14 @@ export default function MisArchivosVista() {
           </article>
         </section>
 
+        {mensaje && <p className={styles.successNotice} role="status">{mensaje}</p>}
+        {confirmacion && <section ref={confirmacionRef} tabIndex={-1} className={styles.confirmDelete} role="alertdialog" aria-modal="false" aria-labelledby="titulo-eliminar" aria-describedby="detalle-eliminar">
+          <h2 id="titulo-eliminar">¿Eliminar «{confirmacion.nombre}»?</h2>
+          <p id="detalle-eliminar">Se borrará el archivo y sus enlaces dejarán de funcionar. Esta acción no se puede deshacer. Si hay descargas en curso, deberás esperar a que terminen.</p>
+          <button type="button" disabled={eliminando} onClick={confirmarEliminacion}>{eliminando ? "Eliminando…" : "Confirmar eliminación"}</button>
+          <button type="button" disabled={eliminando} onClick={() => setConfirmacion(null)}>Cancelar</button>
+        </section>}
+
         <section className={styles.listSection} aria-label="Lista de archivos">
           <div className={styles.searchRow}>
             <label className={styles.searchBox}>
@@ -197,6 +238,7 @@ export default function MisArchivosVista() {
                   <th>FORMATO</th>
                   <th>FECHA DE SUBIDA</th>
                   <th>ESTADO DEL ENLACE</th>
+                  <th>ACCIONES</th>
                 </tr>
               </thead>
               <tbody>
@@ -206,7 +248,7 @@ export default function MisArchivosVista() {
                       <div className={styles.fileCell}>
                         <span className={styles.fileIcon} aria-hidden="true">▤</span>
                         <span className={styles.fileName}>
-                          <Link className={styles.shareLink} href={`/compartir-enlace?archivo=${encodeURIComponent(archivo.id)}`} title="Configurar enlaces de este archivo"><strong>{archivo.nombre}</strong></Link>
+                          {archivo.estadoLimpieza === "pendiente_limpieza" ? <strong>{archivo.nombre}</strong> : <Link className={styles.shareLink} href={`/compartir-enlace?archivo=${encodeURIComponent(archivo.id)}`} title="Configurar enlaces de este archivo"><strong>{archivo.nombre}</strong></Link>}
                           <small>{formatoTamano(archivo.tamanoBytes)}</small>
                         </span>
                       </div>
@@ -218,11 +260,14 @@ export default function MisArchivosVista() {
                         {archivo.estadoEnlace}
                       </span>
                     </td>
+                    <td><button type="button" className={styles.deleteButton} disabled={eliminando || (archivo.estadoLimpieza === "pendiente_limpieza" && !archivo.eliminacionSolicitada)} onClick={() => { setConfirmacion(archivo); setMensaje(""); }} aria-label={`Eliminar archivo ${archivo.nombre}`}>
+                      {archivo.estadoLimpieza === "pendiente_limpieza" ? "Reintentar eliminación" : "Eliminar archivo"}
+                    </button></td>
                   </tr>
                 ))}
                 {archivosFiltrados.length === 0 && (
                   <tr>
-                    <td className={styles.emptySearch} colSpan={4}>No hay archivos con ese nombre.</td>
+                    <td className={styles.emptySearch} colSpan={5}>No hay archivos con ese nombre.</td>
                   </tr>
                 )}
               </tbody>

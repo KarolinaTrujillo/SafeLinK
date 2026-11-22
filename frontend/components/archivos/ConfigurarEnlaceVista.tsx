@@ -51,7 +51,7 @@ export default function ConfigurarEnlaceVista() {
   const revocado = Boolean(enlace?.revocado_en);
   const maximo = Number(limite === "personalizado" ? limitePersonalizado : limite);
   const usadas = enlace?.descargas_realizadas ?? 0;
-  const bloqueado = ocupado || cargandoEnlaces || !consultaCompleta || !archivo || revocado;
+  const bloqueado = archivo?.estadoLimpieza === "pendiente_limpieza" || ocupado || cargandoEnlaces || !consultaCompleta || !archivo || revocado;
 
   useEffect(() => {
     let activo = true;
