@@ -2,7 +2,7 @@
 
 ## Estado
 
-La migración de limpieza del 21 de noviembre fue aplicada por Karol y la revisión SQL funciona. Karol confirmó las cuatro comprobaciones de la migración del 22 de noviembre (índice, trigger, reservas y vista de limpieza). La función y la programación diaria siguen pendientes de despliegue y activación. Primero probar el modo de revisión. No ejecutar la prueba SQL sobre producción.
+La migración de limpieza del 21 de noviembre fue aplicada por Karol y la revisión SQL funciona. Karol confirmó las cuatro comprobaciones de la migración del 22 de noviembre (índice, trigger, reservas y vista de limpieza). Karol confirmó el despliegue de la función, su revisión alojada y la programación diaria activa en modo ejecutar (jobid 1, horario 0 9 * * *). La primera ejecución programada y su respuesta HTTP siguen pendientes de verificar. Primero probar el modo de revisión. No ejecutar la prueba SQL sobre producción.
 
 ## Reglas
 

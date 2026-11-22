@@ -12,8 +12,8 @@
 @theme inline {
   --color-background: var(--page);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: monospace;
 }
 
 * {

@@ -168,3 +168,41 @@ Confirmado que editar conserva las descargas realizadas: con 3 utilizadas, los l
 ### 2026-11-22 — Prueba manual de limpieza autorizada
 
 Karol confirmó aislamiento de configuraciones A/B y reemplazo de contraseña conservando URL. La consulta actual de limpieza devolvió únicamente 243733flayer.pdf, sin reservas y elegible desde el 14 de noviembre. Autorizó eliminarlo sin copia. El intento de revisión remota desde el agente falló por conexión, sin mutaciones. Se preparó backend/scripts/limpiar-archivo.mjs para ejecutar localmente el trabajador existente limitado a un ID, sin purgar eventos ni activar programación. Sintaxis y 11 pruebas del trabajador aprobadas; ejecución real pendiente del resultado en su equipo.
+
+
+### 2026-11-22 — Registro sin confirmación de correo
+
+Karol solicita permitir registro e inicio de sesión sin confirmar correo. Requiere desactivar Confirm email en Authentication > Sign In / Providers > Email del proyecto alojado; el cambio remoto sigue pendiente de confirmación. El formulario ya maneja la sesión inmediata devuelta por signUp, valida en backend y abre Mis archivos. Se reemplazó la ayuda técnica sobre configuración de Supabase por una indicación para el usuario. Se conserva el manejo de confirmación cuando el proveedor no entregue sesión. No se cambian roles ni validación de contraseña.
+
+
+### 2026-11-22 — Confirmaciones manuales y cierre de pruebas
+
+Karol confirmó el registro sin confirmación de correo tras habilitar el proveedor Email y desactivar Confirm email. También confirmó borrado manual de un PDF (revisados 1, borrados 1, errores 0, archivoEliminado true), despliegue de limpiar-archivos, revisión alojada sin candidatos y Cron safelink-limpieza-diaria activo con horario 0 9 * * * (03:00 America/Mexico_City), configurado en modo ejecutar. Queda por verificar la respuesta real de la primera llamada programada, además del historial SQL de Cron.
+
+Pruebas por cerrar: API administrativa con usuario normal/sin sesión, acceso entre usuarios propietarios distintos, concurrencia del último cupo de descarga, actividad reciente y escalamiento completo del bloqueo. Validaciones de carga/cuotas y compilación de producción deben revisarse al cerrar la entrega. No se consideran aprobadas solo por existir código o pruebas simuladas.
+
+
+### 2026-11-22 — Actividad reciente visible al abrir
+
+Karol confirmó API: GET /api/admin/panel sin sesión devuelve 401; panel, eventos y revocación con usuario normal devuelven 403. La cuenta B no ve configuración del archivo de A en pantalla y GET /api/enlaces/archivo/:id devuelve 404.
+
+Durante la prueba de actividad reciente el botón parecía no responder porque la sección se insertaba al final, debajo de toda la tabla de archivos. Se movió inmediatamente después del encabezado del panel, antes de las métricas. El botón ahora alterna Actividad reciente/Ocultar actividad y declara aria-controls. Se conservan carga, errores, paginación y autorización. La visualización de eventos reales sigue pendiente de confirmación manual.
+
+
+### 2026-11-22 — Cierre de pruebas y preparación del despliegue
+
+Karol confirmó actividad reciente con descarga exitosa e intento rechazado; validaciones de pantalla de extensión .txt, tamaño superior a 10 MB, carga válida con incremento de contador, cuota 10/10 con rechazo del archivo 11 y vencimiento superior a 15 días. Confirmó funcionamiento esperado del bloqueo completo y su reinicio. Decisión explícita: conservar el bloqueo compartido por enlace, sin cookie, aceptando que afecta a todos sus visitantes. Concurrencia y primera ejecución automática continúan pendientes.
+
+Solicita desplegar antes de la prueba entre personas. Compilación backend aprobada; el build de frontend falló al descargar Geist y Geist Mono desde Google Fonts por falta de conexión en este entorno. No se ha publicado ni confirmado un build frontend de producción. Se propuso Vercel para frontend y Render para backend con Supabase existente; elección pendiente de respuesta. Deben configurarse NEXT_PUBLIC_API_URL, FRONTEND_URL, credenciales separadas por servicio y URLs de Auth, con la URL pública definitiva; los enlaces ya copiados con localhost no se transforman al cambiar la variable. Sin commits ni push durante esta preparación.
+
+Preparación de build: se retiraron next/font/google Geist y Geist Mono, que no eran usados por las pantallas (body ya define Arial y campos secretos usan monospace). Las variables Tailwind ahora usan esas mismas familias disponibles localmente. El nuevo build superó la descarga de fuentes pero Turbopack falló al lanzar/conectar el subproceso de transformación CSS en este entorno; no se da el build de producción por aprobado. Se mantiene pendiente comprobarlo en el equipo de Karol o en el proveedor.
+
+
+### 2026-11-22 — Build de producción confirmado en el equipo de Karol
+
+Karol eligió Vercel para frontend y Render para backend. Actualizó next y eslint-config-next a 16.4.6, reflejados en package.json y package-lock.json. El último resultado aportado de npm run build muestra compilación, TypeScript, recolección de datos, generación 11/11 y optimización completadas. Errores anteriores de módulos internos aparecieron durante cambios de node_modules en el servidor de desarrollo; el build final fue correcto y no requiere editar esos imports. Backend compilado previamente. Falta revisar las 7 vulnerabilidades moderadas reportadas por npm (separar producción/desarrollo), sincronizar los cambios seleccionados con GitHub sin incluir secretos/artefactos, desplegar Render y Vercel y comprobar las URLs públicas. No se realizaron commits, push ni despliegue del sitio desde el agente.
+
+
+### 2026-11-22 — Exclusiones antes de publicar
+
+Karol aportó npm audit --omit=dev del frontend: 0 vulnerabilidades. Se excluyeron /.postman/, /postman/ y /tmp/pruebas-carga/ del Git raíz; no se borraron archivos ni se modificó el índice de Git. Se conservan .env.example, código, lockfiles, documentación, migraciones, pruebas del proyecto y Cron. Las previsualizaciones ya versionadas en otras subcarpetas tmp no se retiraron en esta operación. Sin commit ni push.

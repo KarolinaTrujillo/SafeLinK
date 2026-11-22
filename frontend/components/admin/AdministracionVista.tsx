@@ -144,8 +144,16 @@ export default function AdministracionVista() {
     <section className={styles.content}>
       <header className={styles.heading}>
         <div><h1>Panel de Administración</h1><p>Monitoreo general de recursos compartidos y políticas de acceso.</p></div>
-        <div className={styles.toolbar}><button type="button" aria-expanded={verActividad} onClick={() => setVerActividad(!verActividad)}>Actividad reciente</button><button type="button" disabled={cargando || revocando} onClick={() => setRevision((valor) => valor + 1)}><Icono tipo="actualizar" /> Actualizar</button></div>
+        <div className={styles.toolbar}><button type="button" aria-expanded={verActividad} aria-controls="actividad-reciente" onClick={() => setVerActividad(!verActividad)}>{verActividad ? "Ocultar actividad" : "Actividad reciente"}</button><button type="button" disabled={cargando || revocando} onClick={() => setRevision((valor) => valor + 1)}><Icono tipo="actualizar" /> Actualizar</button></div>
       </header>
+      {verActividad && <section id="actividad-reciente" className={styles.tablePanel} aria-labelledby="actividad-admin">
+        <div className={styles.tableHeading}><h2 id="actividad-admin">Actividad reciente</h2><p>Eventos registrados en los últimos 60 días.</p></div>
+        {errorEventos && <p className={styles.error} role="alert">{errorEventos}</p>}
+        <div className={styles.tableScroll}><table className={styles.table} aria-busy={cargandoEventos}><thead><tr><th scope="col">Fecha</th><th scope="col">Evento</th><th scope="col">Resultado</th><th scope="col">Detalle</th></tr></thead><tbody>
+          {cargandoEventos ? <tr><td colSpan={4} className={styles.empty}>Cargando eventos…</td></tr> : errorEventos ? <tr><td colSpan={4} className={styles.empty}>No se pudo actualizar la actividad.</td></tr> : eventos.length ? eventos.map((evento) => <tr key={evento.id}><td>{fecha(evento.creado_en)}</td><td>{evento.tipo_evento.replaceAll("_", " ")}</td><td><span className={`${styles.badge} ${evento.resultado === "exitoso" ? styles.active : styles.revoked}`}>{evento.resultado}</span></td><td>{evento.motivo ?? "—"}</td></tr>) : <tr><td colSpan={4} className={styles.empty}>Aún no hay eventos registrados.</td></tr>}
+        </tbody></table></div>
+        <footer className={styles.pagination}><span>{formato.format(totalEventos)} eventos</span><div><button type="button" disabled={paginaEventos <= 1 || cargandoEventos} onClick={() => setPaginaEventos(paginaEventos - 1)}>Anterior</button><span>Página {paginaEventos} de {Math.max(1, Math.ceil(totalEventos / 10))}</span><button type="button" disabled={paginaEventos * 10 >= totalEventos || cargandoEventos} onClick={() => setPaginaEventos(paginaEventos + 1)}>Siguiente</button></div></footer>
+      </section>}
       <div className={styles.metrics} aria-label="Métricas globales">
         <article className={styles.metric}><div className={styles.metricLabel}><h2>Total de archivos</h2><span><Icono tipo="archivos" /></span></div><strong>{panel ? formato.format(panel.metricas.archivos) : "—"}</strong><p>{panel ? `${formato.format(panel.metricas.usuarios)} usuarios registrados` : "Cargando datos…"}</p></article>
         <article className={styles.metric}><div className={styles.metricLabel}><h2>Descargas exitosas</h2><span className={styles.greenIcon}><Icono tipo="descargas" /></span></div><strong>{panel ? formato.format(panel.metricas.descargas) : "—"}</strong><p>Eventos registrados en los últimos 60 días</p></article>
@@ -178,14 +186,7 @@ export default function AdministracionVista() {
         </div>
         <footer className={styles.pagination}><span>{panel ? `${formato.format(panel.total)} archivos encontrados` : "Sin datos"}</span><div><button type="button" disabled={pagina <= 1 || cargando || revocando} onClick={() => { setPagina(pagina - 1); setConfirmacion(null); }}>Anterior</button><span>Página {pagina} de {Math.max(1, Math.ceil((panel?.total ?? 0) / 10))}</span><button type="button" disabled={!panel || pagina * 10 >= panel.total || cargando || revocando} onClick={() => { setPagina(pagina + 1); setConfirmacion(null); }}>Siguiente</button></div></footer>
       </section>
-      {verActividad && <section className={styles.tablePanel} aria-labelledby="actividad-admin">
-        <div className={styles.tableHeading}><h2 id="actividad-admin">Actividad reciente</h2><p>Eventos registrados en los últimos 60 días.</p></div>
-        {errorEventos && <p className={styles.error} role="alert">{errorEventos}</p>}
-        <div className={styles.tableScroll}><table className={styles.table} aria-busy={cargandoEventos}><thead><tr><th scope="col">Fecha</th><th scope="col">Evento</th><th scope="col">Resultado</th><th scope="col">Detalle</th></tr></thead><tbody>
-          {cargandoEventos ? <tr><td colSpan={4} className={styles.empty}>Cargando eventos…</td></tr> : errorEventos ? <tr><td colSpan={4} className={styles.empty}>No se pudo actualizar la actividad.</td></tr> : eventos.length ? eventos.map((evento) => <tr key={evento.id}><td>{fecha(evento.creado_en)}</td><td>{evento.tipo_evento.replaceAll("_", " ")}</td><td><span className={`${styles.badge} ${evento.resultado === "exitoso" ? styles.active : styles.revoked}`}>{evento.resultado}</span></td><td>{evento.motivo ?? "—"}</td></tr>) : <tr><td colSpan={4} className={styles.empty}>Aún no hay eventos registrados.</td></tr>}
-        </tbody></table></div>
-        <footer className={styles.pagination}><span>{formato.format(totalEventos)} eventos</span><div><button type="button" disabled={paginaEventos <= 1 || cargandoEventos} onClick={() => setPaginaEventos(paginaEventos - 1)}>Anterior</button><span>Página {paginaEventos} de {Math.max(1, Math.ceil(totalEventos / 10))}</span><button type="button" disabled={paginaEventos * 10 >= totalEventos || cargandoEventos} onClick={() => setPaginaEventos(paginaEventos + 1)}>Siguiente</button></div></footer>
-      </section>}
+
     </section>
   </main>;
 }

@@ -220,3 +220,34 @@ Guardar edita el mismo enlace y conserva URL, contraseña si no se reemplaza y d
 ### 2026-11-22 — Límite mínimo al editar
 
 Confirmado que editar conserva las descargas realizadas: con 3 utilizadas, los límites 1 y 2 se rechazan en backend y BD. La pantalla ahora deshabilita esos presets y explica que el límite es total, no descargas adicionales. El campo personalizado conserva el mínimo dinámico y la validación antes de enviar. Un límite de 3 deja 0 disponibles; aumentarlo a 5 deja 2. Se agregó una prueba de rechazo de límites inferiores sin escrituras. Esta mejora no necesita otra migración.
+
+
+### 2026-11-22 — Registro sin confirmación de correo
+
+Karol solicita permitir registro e inicio de sesión sin confirmar correo. Requiere desactivar Confirm email en Authentication > Sign In / Providers > Email del proyecto alojado; el cambio remoto sigue pendiente de confirmación. El formulario ya maneja la sesión inmediata devuelta por signUp, valida en backend y abre Mis archivos. Se reemplazó la ayuda técnica sobre configuración de Supabase por una indicación para el usuario. Se conserva el manejo de confirmación cuando el proveedor no entregue sesión. No se cambian roles ni validación de contraseña.
+
+
+### 2026-11-22 — Confirmaciones manuales y cierre de pruebas
+
+Karol confirmó el registro sin confirmación de correo tras habilitar el proveedor Email y desactivar Confirm email. También confirmó borrado manual de un PDF (revisados 1, borrados 1, errores 0, archivoEliminado true), despliegue de limpiar-archivos, revisión alojada sin candidatos y Cron safelink-limpieza-diaria activo con horario 0 9 * * * (03:00 America/Mexico_City), configurado en modo ejecutar. Queda por verificar la respuesta real de la primera llamada programada, además del historial SQL de Cron.
+
+Pruebas por cerrar: API administrativa con usuario normal/sin sesión, acceso entre usuarios propietarios distintos, concurrencia del último cupo de descarga, actividad reciente y escalamiento completo del bloqueo. Validaciones de carga/cuotas y compilación de producción deben revisarse al cerrar la entrega. No se consideran aprobadas solo por existir código o pruebas simuladas.
+
+
+### 2026-11-22 — Actividad reciente visible al abrir
+
+Karol confirmó API: GET /api/admin/panel sin sesión devuelve 401; panel, eventos y revocación con usuario normal devuelven 403. La cuenta B no ve configuración del archivo de A en pantalla y GET /api/enlaces/archivo/:id devuelve 404.
+
+Durante la prueba de actividad reciente el botón parecía no responder porque la sección se insertaba al final, debajo de toda la tabla de archivos. Se movió inmediatamente después del encabezado del panel, antes de las métricas. El botón ahora alterna Actividad reciente/Ocultar actividad y declara aria-controls. Se conservan carga, errores, paginación y autorización. La visualización de eventos reales sigue pendiente de confirmación manual.
+
+
+### 2026-11-22 — Cierre de pruebas y preparación del despliegue
+
+Karol confirmó actividad reciente con descarga exitosa e intento rechazado; validaciones de pantalla de extensión .txt, tamaño superior a 10 MB, carga válida con incremento de contador, cuota 10/10 con rechazo del archivo 11 y vencimiento superior a 15 días. Confirmó funcionamiento esperado del bloqueo completo y su reinicio. Decisión explícita: conservar el bloqueo compartido por enlace, sin cookie, aceptando que afecta a todos sus visitantes. Concurrencia y primera ejecución automática continúan pendientes.
+
+Solicita desplegar antes de la prueba entre personas. Compilación backend aprobada; el build de frontend falló al descargar Geist y Geist Mono desde Google Fonts por falta de conexión en este entorno. No se ha publicado ni confirmado un build frontend de producción. Se propuso Vercel para frontend y Render para backend con Supabase existente; elección pendiente de respuesta. Deben configurarse NEXT_PUBLIC_API_URL, FRONTEND_URL, credenciales separadas por servicio y URLs de Auth, con la URL pública definitiva; los enlaces ya copiados con localhost no se transforman al cambiar la variable. Sin commits ni push durante esta preparación.
+
+
+### 2026-11-22 — Build de producción confirmado en el equipo de Karol
+
+Karol eligió Vercel para frontend y Render para backend. Actualizó next y eslint-config-next a 16.4.6, reflejados en package.json y package-lock.json. El último resultado aportado de npm run build muestra compilación, TypeScript, recolección de datos, generación 11/11 y optimización completadas. Errores anteriores de módulos internos aparecieron durante cambios de node_modules en el servidor de desarrollo; el build final fue correcto y no requiere editar esos imports. Backend compilado previamente. Falta revisar las 7 vulnerabilidades moderadas reportadas por npm (separar producción/desarrollo), sincronizar los cambios seleccionados con GitHub sin incluir secretos/artefactos, desplegar Render y Vercel y comprobar las URLs públicas. No se realizaron commits, push ni despliegue del sitio desde el agente.

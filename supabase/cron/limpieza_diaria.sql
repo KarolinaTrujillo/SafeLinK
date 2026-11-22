@@ -22,7 +22,7 @@ select cron.schedule('safelink-limpieza-diaria', '0 9 * * *', $tarea$
     url := rtrim((select decrypted_secret from vault.decrypted_secrets where name = 'safelink_project_url'), '/') || '/functions/v1/limpiar-archivos',
     headers := jsonb_build_object('Content-Type', 'application/json',
       'x-limpieza-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'safelink_limpieza_secret')),
-    body := '{"modo":"revision"}'::jsonb,
+    body := '{"modo":"ejecutar"}'::jsonb,,
     timeout_milliseconds := 120000
   );
 $tarea$);

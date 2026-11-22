@@ -108,10 +108,10 @@ export default function RegistroForm() {
     <main className={styles.signupLayout}>
       <section className={styles.signupCard} aria-labelledby="signup-title">
         <div className={styles.signupCardContent}>
-          <a className={styles.brand} href="/" aria-label="SafeLinK, inicio">
+          <Link className={styles.brand} href="/" aria-label="SafeLinK, inicio">
             <span className={styles.brandIcon}><LockIcon /></span>
             <span>SafeLinK</span>
-          </a>
+          </Link>
 
           <header className={styles.signupHeading}>
             <h1 id="signup-title">Crear nueva cuenta</h1>
@@ -132,7 +132,7 @@ export default function RegistroForm() {
                 required
               />
             </div>
-            <p className={styles.fieldHelp}>La confirmación de correo depende de la configuración actual de Supabase.</p>
+            <p className={styles.fieldHelp}>Usa un correo al que tengas acceso y recuerda tu contraseña.</p>
 
             <div className={styles.passwordGrid}>
               <div>

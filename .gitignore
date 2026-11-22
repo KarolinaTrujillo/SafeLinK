@@ -30,3 +30,8 @@ uploads/
 npm-debug.log*
 .DS_Store
 Thumbs.db
+
+# Pruebas locales de API y archivos de prueba
+/.postman/
+/postman/
+/tmp/pruebas-carga/
