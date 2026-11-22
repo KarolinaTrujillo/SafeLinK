@@ -14,15 +14,15 @@ begin
 end;
 $$;
 
--- 09:00 UTC = 03:00 en America/Mexico_City. La primera programación solo revisa.
--- Tras comprobar los resultados, cambiar revision por ejecutar y correr de nuevo
--- este archivo. cron.schedule actualiza el trabajo del mismo nombre.
+-- 09:00 UTC = 03:00 en America/Mexico_City. Configurado en modo ejecutar.
+-- Para una instalación nueva, revisar primero con modo revision.
+-- cron.schedule actualiza el trabajo del mismo nombre, sin ejecutarlo ahora.
 select cron.schedule('safelink-limpieza-diaria', '0 9 * * *', $tarea$
   select net.http_post(
     url := rtrim((select decrypted_secret from vault.decrypted_secrets where name = 'safelink_project_url'), '/') || '/functions/v1/limpiar-archivos',
     headers := jsonb_build_object('Content-Type', 'application/json',
       'x-limpieza-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'safelink_limpieza_secret')),
-    body := '{"modo":"ejecutar"}'::jsonb,,
+    body := '{"modo":"ejecutar"}'::jsonb,
     timeout_milliseconds := 120000
   );
 $tarea$);
