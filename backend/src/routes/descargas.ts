@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createHash, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { supabaseAdmin } from "../config/supabase.js";
+import { crearControlReserva } from "../reservasDescarga.js";
 
 export const descargasRouter = Router();
 const derivarClave = promisify(scrypt);
@@ -105,29 +106,39 @@ descargasRouter.post("/:token", async (request, response) => {
   if (permiso.estado === "configuracion_cambiada") return response.status(409).json({ error: "La configuración cambió. Recarga la página y vuelve a intentarlo." });
   if (permiso.estado !== "autorizado") return response.status(404).json({ error: mensajeNoDisponible });
 
-  let finalizada = false;
-  async function finalizar(exito: boolean) {
-    if (finalizada) return;
-    finalizada = true;
-    const { error: errorFinalizar } = await supabaseAdmin.rpc("finalizar_descarga", { p_reserva_id: permiso.reservaId, p_exito: exito });
-    // Sin credenciales ni identificadores privados en los logs.
-    if (errorFinalizar) console.error("No se pudo cerrar una reserva de descarga. Requiere revisión.");
+  let envioIniciado = false;
+  const storageAbort = new AbortController();
+  const control = crearControlReserva({
+    reservaId: permiso.reservaId,
+    rpc: (nombre, args, signal) => supabaseAdmin.rpc(nombre, args).abortSignal(signal),
+    detener: () => { storageAbort.abort(); if (!response.destroyed) response.destroy(); },
+  });
+  response.once("close", () => {
+    storageAbort.abort();
+    void control.cerrar(response.writableFinished ? "exitoso" : envioIniciado ? "no_confirmado" : "fallido");
+  });
+  response.once("finish", () => { void control.cerrar("exitoso"); });
+  if (!await control.iniciar()) {
+    await control.cerrar("fallido");
+    if (!response.destroyed) response.status(503).json({ error: "No se pudo mantener la reserva de descarga. Inténtalo más tarde." });
+    return;
   }
-  response.once("close", () => { void finalizar(response.writableFinished); });
-  response.once("finish", () => { void finalizar(true); });
   try {
     // Los archivos tienen un máximo de 10 MB, por lo que se pueden enviar como un buffer.
-    const { data, error: errorStorage } = await supabaseAdmin.storage.from("safelink-files").download(permiso.ruta);
+    const { data, error: errorStorage } = await supabaseAdmin.storage.from("safelink-files").download(permiso.ruta, {}, { signal: storageAbort.signal });
     if (errorStorage || !data) throw new Error("Storage no disponible");
     const contenido = Buffer.from(await data.arrayBuffer());
     if (contenido.length !== Number(permiso.tamanoBytes)) throw new Error("Archivo incompleto");
-    if (response.destroyed) { await finalizar(false); return; }
+    if (response.destroyed || !control.vigente()) { await control.cerrar("fallido"); return; }
+    // Revalidar después de Storage, antes de entregar un solo byte al navegador.
+    if (!await control.renovar() || response.destroyed) { await control.cerrar("fallido"); return; }
     response.setHeader("Content-Type", "application/octet-stream");
     response.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(permiso.nombre).replace(/['()*]/g, (caracter) => `%${caracter.charCodeAt(0).toString(16)}`)}`);
+    envioIniciado = true;
     response.send(contenido);
   } catch {
     // Cerrar la reserva como fallida antes de enviar el JSON de error.
-    await finalizar(false);
+    await control.cerrar(envioIniciado ? "no_confirmado" : "fallido");
     if (!response.destroyed && !response.headersSent) response.status(503).json({ error: "No se pudo descargar el archivo. Vuelve a intentarlo." });
   }
 });

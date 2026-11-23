@@ -12,7 +12,7 @@ export type PanelAdmin = {
   conteos: Record<EstadoAdmin, number>; total: number; archivos: ArchivoAdmin[];
 };
 export type EventoAdmin = {
-  id: string; tipo_evento: string; resultado: "exitoso" | "rechazado"; motivo: string | null; creado_en: string;
+  id: string; tipo_evento: string; resultado: "exitoso" | "rechazado" | "no_confirmado"; motivo: string | null; creado_en: string;
 };
 export class ErrorAdmin extends Error {
   constructor(message: string, public estado: number) { super(message); }

@@ -1,5 +1,11 @@
 # Bitácora de actividades — SafeLinK
 
+### 2026-11-22 — Recuperación de reservas abandonadas
+
+Karol confirmó eliminación y estadísticas en producción, concurrencia del último cupo y corrección del comando de Cron instalado (coma duplicada false, activo true, horario 0 9 * * *). Se mantiene pendiente la ejecución diaria de madrugada. Autorizó implementar recuperación de reservas: vencimiento, renovación mientras se transfiere, límite de transferencia y reintentos de cierre. Un resultado incierto consume cupo y se registra como no_confirmado; un fallo demostrado antes de enviar bytes libera cupo si se cierra antes de vencer. Este acuerdo sustituye la liberación incondicional de cualquier transferencia interrumpida.
+
+Preparados migración 202611220003, tarea SQL safelink-recuperar-reservas cada minuto, controlador de backend y presentación del resultado No confirmado en Actividad reciente. La recuperación respeta los bloqueos de archivo/enlace/reserva y es idempotente. No se mezcla incertidumbre con métricas de éxito o rechazo. Sin cambios remotos, commits ni push del agente. Guía y pruebas pendientes en docs/LIMPIEZA.md.
+
 ### 2026-11-15 — Descarga pública y diagnóstico
 
 - Implementada la vista pública de descarga del frame 8-650, sin datos del emisor, con contraseña opcional y mensajes de bloqueo/error.

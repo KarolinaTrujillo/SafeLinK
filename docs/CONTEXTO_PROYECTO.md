@@ -1,5 +1,9 @@
 # SafeLinK — Contexto, reglas y requerimientos
 
+> Estado actualizado 2026-11-22: Karol confirmó despliegues Render/Vercel, eliminación manual y estadísticas de rechazos en producción y la prueba de concurrencia del último cupo. La coma duplicada del comando de Cron se corrigió en Supabase y GitHub; el resultado de la ejecución diaria de madrugada sigue pendiente. Las entradas históricas siguientes conservan sus pendientes de la fecha en que se escribieron.
+
+> Nueva regla autorizada: recuperar reservas abandonadas con vencimiento, renovación y tarea SQL cada minuto. Los resultados inciertos consumen cupo y se registran como `no_confirmado`; los fallos comprobados antes del envío liberan cupo si se cierran a tiempo. Preparada localmente la migración `202611220003_download_reservation_recovery.sql`, backend y presentación del evento; no aplicados/desplegados todavía. Ver docs/LIMPIEZA.md para orden de instalación y pruebas pendientes.
+
 ## 1. Propósito
 
 SafeLinK es un proyecto académico de Seguridad Informática: plataforma web para compartir archivos con controles sobre quién puede acceder, durante cuánto tiempo y cuántas veces. Se debe conservar la propuesta tecnológica porque forma parte de la evaluación. El alcance debe mantenerse realizable en aproximadamente dos semanas y dentro de planes gratuitos.
