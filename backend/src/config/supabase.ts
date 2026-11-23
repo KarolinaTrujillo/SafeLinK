@@ -10,7 +10,6 @@ if (!supabaseUrl || !serviceRoleKey) {
   );
 }
 
-// Este cliente es solo para el backend. Nunca importar desde el frontend.
 export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
     autoRefreshToken: false,

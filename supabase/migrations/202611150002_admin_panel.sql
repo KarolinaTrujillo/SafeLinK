@@ -1,4 +1,3 @@
--- Consultas administrativas agregadas. Express comprueba primero el rol.
 create function public.consultar_panel_admin(p_busqueda text default '', p_estado text default 'Todos', p_pagina integer default 1)
 returns jsonb language sql stable security definer set search_path = '' as $$
   with datos as (
@@ -40,7 +39,6 @@ returns jsonb language sql stable security definer set search_path = '' as $$
   );
 $$;
 
--- Revocación y evento en la misma transacción. El administrador no recibe secretos.
 create function public.revocar_enlace_admin(p_enlace_id uuid)
 returns boolean language plpgsql security definer set search_path = '' as $$
 declare

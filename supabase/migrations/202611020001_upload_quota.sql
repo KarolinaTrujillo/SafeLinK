@@ -1,6 +1,3 @@
--- Registro seguro de metadatos de archivo.
--- El bloqueo del perfil serializa las cargas del mismo usuario para que no
--- puedan superar simultáneamente los límites de archivos y almacenamiento.
 create or replace function public.registrar_archivo(
   p_id uuid,
   p_propietario_id uuid,

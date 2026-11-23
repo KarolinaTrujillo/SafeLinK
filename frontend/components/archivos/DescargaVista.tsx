@@ -54,7 +54,6 @@ export default function DescargaVista({ token }: { token: string }) {
       const enlace = document.createElement("a");
       enlace.href = url; enlace.download = archivo.nombre;
       document.body.appendChild(enlace); enlace.click(); enlace.remove();
-      // Dar tiempo al navegador para procesar la descarga antes de liberar el blob.
       window.setTimeout(() => URL.revokeObjectURL(url), 60000);
       setContrasena("");
       setMensaje("Archivo recibido. Revisa las descargas de tu navegador.");

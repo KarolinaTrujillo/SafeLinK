@@ -1,4 +1,3 @@
--- Reserva y finalización de descargas. Solo Express usa estas funciones.
 create table public.reservas_descarga (
   id uuid primary key default gen_random_uuid(),
   enlace_id uuid not null references public.enlaces_compartidos(id) on delete cascade,
@@ -29,7 +28,6 @@ begin
   if enlace.bloqueado_hasta > clock_timestamp() then
     return jsonb_build_object('estado', 'bloqueado', 'reintentarEn', enlace.bloqueado_hasta);
   end if;
-  -- Una edición concurrente de la contraseña requiere comprobarla de nuevo.
   if enlace.hash_contrasena is distinct from p_hash_contrasena then
     return jsonb_build_object('estado', 'configuracion_cambiada');
   end if;
@@ -83,7 +81,6 @@ begin
 end;
 $$;
 
--- No permitir que una edición quite lugares ya reservados por una descarga.
 create function public.proteger_cupo_reservado()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin

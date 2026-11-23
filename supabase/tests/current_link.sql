@@ -1,4 +1,3 @@
--- Solo base local/de pruebas con TODAS las migraciones aplicadas. No usa Storage.
 begin;
 do $$
 declare

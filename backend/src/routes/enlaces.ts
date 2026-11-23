@@ -10,7 +10,7 @@ const campos = "id, archivo_id, vence_en, maximo_descargas, descargas_realizadas
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const quinceDias = 15 * 24 * 60 * 60 * 1000;
 
-// Solo se devuelve si tiene contraseña, nunca su hash.
+
 function datosPublicos(enlace: Record<string, unknown>) {
   const { hash_contrasena, ...datos } = enlace;
   return { ...datos, protegido: Boolean(hash_contrasena) };
@@ -94,7 +94,6 @@ enlacesRouter.post("/", async (request, response) => {
   return response.status(201).json({ enlace: datosPublicos(enlace), url: `${base.replace(/\/$/, "")}/descargar/${token}`, contrasena });
 });
 
-// Obtener y comprobar el propietario antes de modificar o revocar.
 enlacesRouter.use("/:id", async (request, response, next) => {
   const id = String(request.params.id);
   if (!uuid.test(id)) return response.status(400).json({ error: "Enlace inválido." });
@@ -141,7 +140,6 @@ enlacesRouter.post("/:id/revocar", async (_request, response) => {
   return response.json({ enlace: datosPublicos(data) });
 });
 
-// Los errores internos no exponen claves, hashes ni detalles de Supabase.
 enlacesRouter.use(((error, _request, response, _next) => {
   void error;
   response.status(503).json({ error: "No fue posible procesar el enlace. Inténtalo de nuevo." });

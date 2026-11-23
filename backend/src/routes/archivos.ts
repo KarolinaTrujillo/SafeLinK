@@ -24,7 +24,6 @@ archivosRouter.delete("/:id", async (request, response) => {
   if (reserva.estado !== "preparado" || reserva.id !== id || !reserva.ruta || !reserva.token) {
     return response.status(503).json({ error: "No se pudo preparar la eliminación." });
   }
-  // El estado pendiente ya impide nuevas descargas. Solo liberar cuota tras borrar Storage.
   const { error: errorStorage } = await supabaseAdmin.storage.from("safelink-files").remove([reserva.ruta]);
   if (errorStorage) {
     await supabaseAdmin.rpc("cerrar_limpieza", { p_id: id, p_token: reserva.token, p_exito: false });
@@ -33,7 +32,6 @@ archivosRouter.delete("/:id", async (request, response) => {
   const { data: eliminado, error: errorCerrar } = await supabaseAdmin.rpc("cerrar_limpieza", {
     p_id: id, p_token: reserva.token, p_exito: true,
   });
-  // Si falló el cierre, conservar la reclamación para que la tarea automática recupere el trabajo.
   if (errorCerrar || eliminado !== true) return response.status(503).json({ error: "El borrado quedó pendiente de confirmación. Actualiza la lista más tarde; el cupo se libera al completarlo." });
   return response.json({ eliminado: true });
 });

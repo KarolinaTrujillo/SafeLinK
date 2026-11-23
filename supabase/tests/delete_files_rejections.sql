@@ -1,5 +1,3 @@
--- SOLO base local/de pruebas; todas las migraciones aplicadas. No usa Storage.
--- Cierre exitoso simula la confirmación de Storage; nunca ejecutar en producción.
 begin;
 do $$
 declare
@@ -25,7 +23,6 @@ begin
   if solicitud->>'estado' <> 'no_disponible' then raise exception 'Otro propietario puede eliminar'; end if;
   if exists(select 1 from public.archivos where id=sin_enlace and estado_limpieza<>'activo') then raise exception 'Cambió el archivo ajeno'; end if;
 
-  -- Solo eventos de acceso rechazado, no fallos operativos de limpieza/eliminación.
   antes := (public.consultar_panel_admin()#>>'{metricas,rechazos}')::bigint;
   insert into public.eventos_acceso(archivo_id,tipo_evento,resultado,motivo)
     values(compartido,'limpieza','rechazado','Fallo operativo de prueba'),
@@ -71,7 +68,6 @@ begin
   if public.cerrar_limpieza(sin_enlace,gen_random_uuid(),true) then raise exception 'Aceptó token ajeno'; end if;
   perform public.cerrar_limpieza(sin_enlace,(solicitud->>'token')::uuid,false);
   if not exists(select 1 from public.archivos where id=sin_enlace and estado_limpieza='pendiente_limpieza' and eliminacion_solicitada_en is not null) then raise exception 'El fallo liberó cuota o reactivó el archivo'; end if;
-  -- El Cron existente debe poder recuperar también archivos sin enlaces.
   reintento := public.reclamar_limpieza(sin_enlace);
   if reintento is null then raise exception 'La limpieza automática no recupera el borrado manual fallido'; end if;
   if public.cerrar_limpieza(sin_enlace,(solicitud->>'token')::uuid,true) then raise exception 'Aceptó reclamación anterior'; end if;

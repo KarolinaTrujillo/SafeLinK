@@ -1,10 +1,7 @@
--- No borra datos al aplicarse. Requiere la migración de reservas de descarga.
 begin;
 alter table public.archivos add column limpieza_token uuid;
 alter table public.archivos add column limpieza_reclamada_en timestamptz;
 
--- Un enlace agotado/bloqueado aún puede ampliarse: solo cuentan vencimiento y revocación.
--- Sin enlaces, el archivo se conserva indefinidamente hasta una decisión explícita.
 create view public.candidatos_limpieza as
 select a.id, a.nombre_original, a.ruta_almacenamiento, a.estado_limpieza,
   max(least(e.vence_en, coalesce(e.revocado_en, e.vence_en))) + interval '10 days' as eliminar_en,
@@ -16,7 +13,6 @@ having bool_and(e.revocado_en is not null or e.vence_en <= now());
 revoke all on public.candidatos_limpieza from public, anon, authenticated;
 grant select on public.candidatos_limpieza to service_role;
 
--- Serializa creación/edición de enlaces contra la reclamación para borrar.
 create function public.proteger_archivo_en_limpieza()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare estado public.estado_limpieza;
@@ -38,7 +34,6 @@ $$;
 create trigger proteger_archivo_en_limpieza before insert or update of archivo_id, vence_en, revocado_en
   on public.enlaces_compartidos for each row execute function public.proteger_archivo_en_limpieza();
 
--- Una reserva nueva también debe esperar el bloqueo del archivo y comprobar su estado.
 create function public.proteger_reserva_en_limpieza()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare estado public.estado_limpieza;
@@ -121,7 +116,6 @@ begin
   end if;
   insert into public.eventos_acceso(archivo_id, tipo_evento, resultado, motivo)
     values(p_id, 'limpieza', 'exitoso', 'Eliminación por retención de 10 días');
-  -- Los eventos se conservan, con FK a null, hasta cumplir sus propios 60 días.
   delete from public.archivos where id = p_id;
   return true;
 end;
@@ -131,7 +125,6 @@ create function public.purgar_eventos_vencidos()
 returns integer language plpgsql security definer set search_path = '' as $$
 declare cantidad integer;
 begin
-  -- Lote acotado para no exceder el tiempo de la función. Se continúa al día siguiente.
   delete from public.eventos_acceso where id in (
     select id from public.eventos_acceso where creado_en < now() - interval '60 days'
       order by creado_en, id limit 5000

@@ -1,5 +1,3 @@
--- SOLO en PostgreSQL local/de pruebas con todas las migraciones aplicadas.
--- Sin Storage, sin Cron, sin llamadas de red. Cambios revertidos al terminar.
 begin;
 do $$
 declare
@@ -50,10 +48,8 @@ begin
   if public.reservar_descarga(enlace::text,null,true)->>'estado' <> 'no_disponible' then raise exception 'Superó límite tras recuperar'; end if;
   solicitud := public.solicitar_eliminacion_archivo(archivo,usuario);
   if solicitud->>'estado' <> 'preparado' then raise exception 'Reserva abandonada sigue impidiendo borrado'; end if;
-  -- Simular fallo de Storage para mantener el objeto de prueba y no confirmar borrado real.
   perform public.cerrar_limpieza(archivo,(solicitud->>'token')::uuid,false);
 
-  -- Un cierre tardío de fallo se convierte en incierto incluso antes de que pase Cron.
   update public.archivos set estado_limpieza='activo', eliminacion_solicitada_en=null where id=archivo;
   update public.enlaces_compartidos set maximo_descargas=3 where id=enlace;
   permiso := public.reservar_descarga(enlace::text,null,true);

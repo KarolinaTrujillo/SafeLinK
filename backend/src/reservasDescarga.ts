@@ -11,7 +11,6 @@ const relojReal: Reloj = {
   pausa: ms => new Promise(resolve => setTimeout(resolve, ms)),
 };
 
-// No conoce respuestas HTTP ni credenciales. El reloj se inyecta en las pruebas.
 export function crearControlReserva({ reservaId, rpc, detener, reloj = relojReal }: {
   reservaId: string; rpc: Rpc; detener: () => void; reloj?: Reloj;
 }) {
@@ -49,14 +48,12 @@ export function crearControlReserva({ reservaId, rpc, detener, reloj = relojReal
     return renovando;
   }
   async function iniciar() {
-    // La primera comprobación también impide enviar con una migración faltante.
     if (cerrando) return false;
     try {
       const resultado = await llamar('renovar_reserva_descarga', { p_reserva_id: reservaId });
       if (cerrando || resultado.error || resultado.data !== true) return false;
       activa = true;
       cancelarRenovacion = reloj.cada(20_000, () => { void renovar(); });
-      // Menor que el límite absoluto de BD (10 minutos), con margen para cerrar.
       cancelarLimite = reloj.despues(9 * 60_000, () => { if (activa) { parar(); detener(); } });
       return true;
     } catch { return false; }
@@ -72,7 +69,6 @@ export function crearControlReserva({ reservaId, rpc, detener, reloj = relojReal
         } catch { /* El resultado original se conserva en cada reintento. */ }
         if (intento < 2) await reloj.pausa((intento + 1) * 250);
       }
-      // Cron recuperará la reserva; nunca liberar cupo por un fallo de comunicación.
       console.error('No se pudo confirmar el cierre de descarga; recuperación automática pendiente.');
     })();
     return cerrando;

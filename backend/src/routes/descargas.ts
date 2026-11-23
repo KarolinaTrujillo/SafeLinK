@@ -9,7 +9,6 @@ const derivarClave = promisify(scrypt);
 let verificacionesEnCurso = 0;
 const mensajeNoDisponible = "El enlace no está disponible. Solicita uno nuevo a quien te lo compartió.";
 
-// Fallar cerrado si no es posible registrar un intento rechazado.
 async function registrarRechazo(response: import("express").Response, id: string | null, motivo: string) {
   const { error } = await supabaseAdmin.rpc("registrar_rechazo_descarga", { p_enlace_id: id, p_motivo: motivo });
   if (error) {
@@ -27,7 +26,6 @@ async function claveCorrecta(clave: string, guardada: string | null) {
   return timingSafeEqual(Buffer.from(hash, "hex"), comprobacion);
 }
 
-// La URL es una credencial: no cachear sus respuestas ni registrar el token.
 descargasRouter.use((_request, response, next) => {
   response.setHeader("Cache-Control", "no-store");
   response.setHeader("Referrer-Policy", "no-referrer");
@@ -124,7 +122,6 @@ descargasRouter.post("/:token", async (request, response) => {
     return;
   }
   try {
-    // Los archivos tienen un máximo de 10 MB, por lo que se pueden enviar como un buffer.
     const { data, error: errorStorage } = await supabaseAdmin.storage.from("safelink-files").download(permiso.ruta, {}, { signal: storageAbort.signal });
     if (errorStorage || !data) throw new Error("Storage no disponible");
     const contenido = Buffer.from(await data.arrayBuffer());
@@ -137,7 +134,6 @@ descargasRouter.post("/:token", async (request, response) => {
     envioIniciado = true;
     response.send(contenido);
   } catch {
-    // Cerrar la reserva como fallida antes de enviar el JSON de error.
     await control.cerrar(envioIniciado ? "no_confirmado" : "fallido");
     if (!response.destroyed && !response.headersSent) response.status(503).json({ error: "No se pudo descargar el archivo. Vuelve a intentarlo." });
   }

@@ -1,5 +1,3 @@
--- SOLO en una base local/de pruebas con las migraciones ya aplicadas.
--- No invoca Storage. Las escrituras de estas pruebas se revierten al terminar.
 begin;
 do $$
 declare

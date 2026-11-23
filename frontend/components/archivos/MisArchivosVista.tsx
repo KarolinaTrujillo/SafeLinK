@@ -116,7 +116,6 @@ export default function MisArchivosVista() {
         setMensaje(`Se eliminó «${archivo.nombre}» y se liberó su espacio.`);
       } catch (fallo) {
         setErrorLista(fallo instanceof Error ? fallo.message : "No se pudo eliminar el archivo.");
-        // Un fallo de Storage conserva el cupo y debe mostrar el estado pendiente real.
         try { setArchivos(await obtenerArchivos(data.session.access_token)); } catch { /* Conservar la última lista. */ }
       }
     } catch {

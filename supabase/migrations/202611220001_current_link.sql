@@ -1,10 +1,7 @@
--- Una configuración actual por archivo. No borra archivos ni su historial.
--- Los enlaces históricos dejan de autorizar nuevas descargas al aplicar esta migración.
 begin;
 lock table public.enlaces_compartidos in access exclusive mode;
 alter table public.enlaces_compartidos add column es_actual boolean not null default false;
 
--- Coincide con el criterio que usaba la pantalla antes de esta migración.
 with ordenados as (
   select id, row_number() over(partition by archivo_id
     order by actualizado_en desc, creado_en desc, id desc) as posicion
@@ -17,8 +14,6 @@ where not es_actual;
 alter table public.enlaces_compartidos alter column es_actual set default true;
 create unique index un_enlace_actual_por_archivo on public.enlaces_compartidos(archivo_id) where es_actual;
 
--- Una URL nueva solo se crea cuando la actual fue revocada explícitamente.
--- El bloqueo del archivo serializa dos creaciones para el mismo archivo.
 create function public.proteger_enlace_actual()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
@@ -47,8 +42,6 @@ create trigger comprobar_enlace_actual before insert or update of es_actual, arc
 on public.enlaces_compartidos for each row execute function public.proteger_enlace_actual();
 revoke all on function public.proteger_enlace_actual() from public, anon, authenticated;
 
--- La fecha visible y la fecha usada por limpieza provienen del mismo enlace.
--- Una reserva de CUALQUIER enlace conserva el archivo hasta finalizar el envío.
 create or replace view public.candidatos_limpieza as
 select a.id, a.nombre_original, a.ruta_almacenamiento, a.estado_limpieza,
   least(e.vence_en, coalesce(e.revocado_en, e.vence_en)) + interval '10 days' as eliminar_en,
@@ -77,7 +70,6 @@ begin
   if enlace.bloqueado_hasta > clock_timestamp() then
     return jsonb_build_object('estado', 'bloqueado', 'reintentarEn', enlace.bloqueado_hasta);
   end if;
-  -- Una edición concurrente de la contraseña requiere comprobarla de nuevo.
   if enlace.hash_contrasena is distinct from p_hash_contrasena then
     return jsonb_build_object('estado', 'configuracion_cambiada');
   end if;
@@ -110,7 +102,6 @@ begin
 end;
 $$;
 
--- Consultas administrativas agregadas. Express comprueba primero el rol.
 create or replace function public.consultar_panel_admin(p_busqueda text default '', p_estado text default 'Todos', p_pagina integer default 1)
 returns jsonb language sql stable security definer set search_path = '' as $$
   with datos as (
@@ -152,7 +143,6 @@ returns jsonb language sql stable security definer set search_path = '' as $$
   );
 $$;
 
--- Revocación y evento en la misma transacción. El administrador no recibe secretos.
 create or replace function public.revocar_enlace_admin(p_enlace_id uuid)
 returns boolean language plpgsql security definer set search_path = '' as $$
 declare
@@ -175,6 +165,5 @@ revoke all on function public.consultar_panel_admin(text, text, integer), public
 grant execute on function public.consultar_panel_admin(text, text, integer), public.revocar_enlace_admin(uuid)
   to service_role;
 
--- Recalcular las fechas guardadas sin reclamar ni borrar archivos.
 select public.preparar_limpieza();
 commit;

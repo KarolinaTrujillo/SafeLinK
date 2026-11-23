@@ -1,8 +1,3 @@
--- SafeLinK: esquema inicial propio de la aplicación.
--- auth.users y storage.objects son recursos administrados por Supabase.
--- Las escrituras y operaciones con Storage se realizan únicamente desde la API
--- de confianza (backend); la clave service_role nunca debe llegar al navegador.
-
 create type public.rol_usuario as enum ('usuario', 'administrador');
 create type public.estado_limpieza as enum ('activo', 'pendiente_limpieza');
 create type public.tipo_evento as enum (
@@ -83,8 +78,6 @@ create index idx_eventos_acceso_creado
 create index idx_eventos_enlace_creado
   on public.eventos_acceso (enlace_id, creado_en desc);
 
--- Crear perfil de forma confiable al registrar una cuenta. El rol nunca viene
--- de los datos enviados por el cliente durante el registro.
 create function public.crear_perfil_usuario()
 returns trigger
 language plpgsql
@@ -104,26 +97,17 @@ create trigger al_crear_usuario_crear_perfil
   after insert on auth.users
   for each row execute function public.crear_perfil_usuario();
 
--- La aplicación cliente usa Supabase Auth para autenticación, pero los datos
--- y Storage se consultan únicamente mediante la API Express. RLS queda sin
--- políticas para anon/authenticated (denegación por defecto); Express valida
--- JWT, propietario y rol antes de operar con su clave privada service_role.
 alter table public.perfiles enable row level security;
 alter table public.archivos enable row level security;
 alter table public.enlaces_compartidos enable row level security;
 alter table public.eventos_acceso enable row level security;
 
--- No depender de los grants automáticos de la Data API. Clientes anónimos y
--- autenticados no reciben acceso directo a estas tablas. La API Express será
--- responsable de aplicar las reglas de propietario y administrador.
 revoke all on public.perfiles, public.archivos,
   public.enlaces_compartidos, public.eventos_acceso
   from public, anon, authenticated;
 grant all on public.perfiles, public.archivos,
   public.enlaces_compartidos, public.eventos_acceso to service_role;
 
--- Bucket privado. No se crean políticas para acceso directo desde el cliente:
--- el backend valida propietario, enlace, contraseña y límites antes de usar Storage.
 insert into storage.buckets (
   id, name, public, file_size_limit, allowed_mime_types
 )

@@ -1,4 +1,3 @@
-// La lógica recibe un adaptador para poder probarla sin borrar datos reales.
 export type Plan = {
   corteEventos: string;
   eventosVencidos: number;
@@ -35,7 +34,6 @@ export function crearHandler(secreto: string | undefined, crearAlmacen: () => Al
     if (!secreto || secreto.length < 32) return json({ error: "La limpieza no está configurada." }, 503);
     const recibido = request.headers.get("x-limpieza-secret") ?? "";
     if (!recibido || recibido.length > 512 || !await secretoCorrecto(recibido, secreto)) return json({ error: "No autorizado." }, 401);
-    // Leer un cuerpo pequeño. Ante un error nunca asumir el modo de borrado.
     let body: unknown;
     try {
       if (Number(request.headers.get("content-length")) > 1024) return json({ error: "Solicitud demasiado grande." }, 413);
@@ -70,7 +68,6 @@ export function crearHandler(secreto: string | undefined, crearAlmacen: () => Al
         let reserva: Reserva | null = null;
         let objetoBorrado = false;
         try {
-          // Revalida bajo bloqueo; el plan por sí solo no autoriza el borrado.
           reserva = await almacen.reclamar(archivo.id);
           if (!reserva) { omitidos++; continue; }
           await almacen.borrarObjeto(reserva.ruta);
@@ -79,8 +76,6 @@ export function crearHandler(secreto: string | undefined, crearAlmacen: () => Al
           else errores++;
         } catch {
           errores++;
-          // Si Storage ya borró el objeto, conservar la reclamación y reintentar
-          // después de 15 minutos. No reabrir el archivo ni liberar su cupo.
           if (reserva && !objetoBorrado) {
             try { await almacen.cerrar(reserva.id, reserva.token, false); } catch { /* Reintento posterior. */ }
           }

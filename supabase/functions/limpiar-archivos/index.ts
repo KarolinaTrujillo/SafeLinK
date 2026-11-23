@@ -17,8 +17,6 @@ function crearAlmacen(): AlmacenLimpieza {
     reclamar: (id) => rpc<Reserva | null>("reclamar_limpieza", { p_id: id }),
     async borrarObjeto(ruta) {
       const { error } = await cliente.storage.from("safelink-files").remove([ruta]);
-      // Storage remove es idempotente: si el objeto ya no existe, se puede cerrar
-      // un borrado anterior cuyos metadatos quedaron pendientes por un fallo.
       if (error) throw new Error("No se pudo eliminar el objeto");
     },
     cerrar: (id, token, exito) => rpc<boolean>("cerrar_limpieza", { p_id: id, p_token: token, p_exito: exito }),
@@ -26,5 +24,4 @@ function crearAlmacen(): AlmacenLimpieza {
   };
 }
 
-// Cron usa un secreto exclusivo. No acepta sesiones ni claves públicas de usuarios.
 Deno.serve(crearHandler(Deno.env.get("LIMPIEZA_SECRET"), crearAlmacen));

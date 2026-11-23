@@ -1,7 +1,6 @@
 import type { RequestHandler } from "express";
 import { supabaseAdmin } from "../config/supabase.js";
 
-// Usar después de requireAuth. El rol viene de perfiles, nunca del navegador.
 export const requireAdmin: RequestHandler = async (_request, response, next) => {
   const { data, error } = await supabaseAdmin.from("perfiles")
     .select("rol").eq("id", response.locals.userId).maybeSingle();

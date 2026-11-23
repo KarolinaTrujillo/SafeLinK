@@ -1,8 +1,6 @@
--- Requiere todas las migraciones anteriores. No ejecuta borrados al aplicarse.
 begin;
 alter table public.archivos add column eliminacion_solicitada_en timestamptz;
 
--- Solo intentos POST de descarga, nunca consultas GET. No guarda tokens, claves ni IP.
 create function public.registrar_rechazo_descarga(p_enlace_id uuid, p_motivo text)
 returns void language plpgsql security definer set search_path = '' as $$
 declare
@@ -16,7 +14,6 @@ begin
   end if;
   select archivo_id into archivo_uuid from public.enlaces_compartidos where id = p_enlace_id;
   if found then
-    -- Mismo orden que el borrado: archivo antes de enlace. Evita carreras de las FK.
     perform 1 from public.archivos where id = archivo_uuid for key share;
     if found then
       select id into enlace_uuid from public.enlaces_compartidos where id = p_enlace_id for key share;
@@ -30,8 +27,6 @@ begin
 end;
 $$;
 
--- La reserva sostiene KEY SHARE sobre el archivo; las ediciones de configuración
--- usan NO KEY UPDATE y el borrado reclama FOR UPDATE antes de revisar cupos.
 create or replace function public.proteger_archivo_en_limpieza()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare estado public.estado_limpieza;
@@ -60,8 +55,6 @@ begin
   return new;
 end;
 $$;
--- También incluye solicitudes manuales, incluso archivos sin enlaces.
--- Mantiene la forma de la vista para que la Edge Function existente pueda reintentar.
 create or replace view public.candidatos_limpieza as
 select a.id, a.nombre_original, a.ruta_almacenamiento, a.estado_limpieza,
   case when a.eliminacion_solicitada_en is not null then a.eliminacion_solicitada_en
@@ -71,8 +64,6 @@ select a.id, a.nombre_original, a.ruta_almacenamiento, a.estado_limpieza,
 from public.archivos a left join public.enlaces_compartidos e on e.archivo_id = a.id and e.es_actual
 where a.eliminacion_solicitada_en is not null or e.revocado_en is not null or e.vence_en <= now();
 
--- p_propietario_id procede exclusivamente de la sesión validada por Express.
--- Archivo bloqueado antes de comprobar reservas: una descarga nueva debe esperar.
 create function public.solicitar_eliminacion_archivo(p_id uuid, p_propietario_id uuid)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
@@ -120,7 +111,6 @@ begin
   insert into public.eventos_acceso(archivo_id, tipo_evento, resultado, motivo)
     values(p_id, case when archivo.eliminacion_solicitada_en is not null then 'eliminacion'::public.tipo_evento else 'limpieza'::public.tipo_evento end, 'exitoso',
       case when archivo.eliminacion_solicitada_en is not null then 'Eliminación solicitada por el propietario' else 'Eliminación por retención de 10 días' end);
-  -- Los eventos se conservan, con FK a null, hasta cumplir sus propios 60 días.
   delete from public.archivos where id = p_id;
   return true;
 end;
@@ -165,7 +155,6 @@ begin
     perform public.registrar_rechazo_descarga(enlace.id, 'Bloqueo temporal');
     return jsonb_build_object('estado', 'bloqueado', 'reintentarEn', enlace.bloqueado_hasta);
   end if;
-  -- Una edición concurrente de la contraseña requiere comprobarla de nuevo.
   if enlace.hash_contrasena is distinct from p_hash_contrasena then
     perform public.registrar_rechazo_descarga(enlace.id, 'Configuración cambiada');
     return jsonb_build_object('estado', 'configuracion_cambiada');
