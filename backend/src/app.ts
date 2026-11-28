@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { supabaseAdmin } from "./config/supabase.js";
 import { requireAuth } from "./middleware/auth.js";
+import { crearLimitePeticiones } from "./middleware/rateLimit.js";
 
 import { enlacesRouter } from "./routes/enlaces.js";
 import { descargasRouter } from "./routes/descargas.js";
@@ -24,7 +25,8 @@ const tiposPermitidos: Record<string, string> = {
 };
 
 app.use(helmet());
-app.use(cors({ origin: frontendUrl }));
+app.use(cors({ origin: frontendUrl, exposedHeaders: ["Retry-After"] }));
+app.use("/api", crearLimitePeticiones());
 app.use(express.json({ limit: "1mb" }));
 app.use("/api/enlaces", enlacesRouter);
 app.use("/api/descargas", descargasRouter);
